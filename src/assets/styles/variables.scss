@@ -1,0 +1,46 @@
+/**
+ * SPDX-License-Identifier: AGPL-3.0-or-later
+ *
+ * Nextcloud Flashcards v2 — SCSS Variables
+ */
+
+// App-specific colors
+$flashcards-primary: var(--color-primary);
+$flashcards-success: #2d8c3c;
+$flashcards-warning: #e67700;
+$flashcards-danger: #c92a2a;
+$flashcards-info: #1971c2;
+
+// Card states
+$card-new: #1971c2;
+$card-learning: #e67700;
+$card-review: #2d8c3c;
+$card-relearning: #c92a2a;
+
+// Rating button colors
+$rating-again: #c92a2a;
+$rating-hard: #e67700;
+$rating-good: #2d8c3c;
+$rating-easy: #1971c2;
+$rating-very-easy: #6741d9;
+
+// Card dimensions
+$card-max-width: 700px;
+$card-min-height: 300px;
+$card-border-radius: 12px;
+$card-padding: 24px;
+
+// Transitions
+$transition-flip: 0.4s;
+$transition-fast: 0.15s;
+$transition-normal: 0.25s;
+
+// Breakpoints
+$bp-mobile: 600px;
+$bp-tablet: 900px;
+$bp-desktop: 1200px;
+
+// Z-indices
+$z-card: 10;
+$z-overlay: 100;
+$z-modal: 1000;

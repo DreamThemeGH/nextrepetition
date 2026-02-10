@@ -1,0 +1,507 @@
+<template>
+    <div class="study-page">
+        <!-- Loading -->
+        <div v-if="studyStore.loading && !studyStore.currentCard" class="study-loading">
+            <NcLoadingIcon :size="44" />
+            <p>{{ t('flashcards', 'Loading cards...') }}</p>
+        </div>
+
+        <!-- Empty queue -->
+        <div v-else-if="studyStore.queue.length === 0 && !studyStore.loading" class="study-empty">
+            <h2>🎉 {{ t('flashcards', 'No cards to review!') }}</h2>
+            <p>{{ t('flashcards', 'All cards in this deck are up to date.') }}</p>
+            <NcButton type="primary" @click="goBack">
+                {{ t('flashcards', 'Back to decks') }}
+            </NcButton>
+        </div>
+
+        <!-- Session complete -->
+        <div v-else-if="studyStore.isSessionComplete" class="study-complete">
+            <h2>🏆 {{ t('flashcards', 'Session complete!') }}</h2>
+            <div class="session-stats">
+                <div class="session-stat">
+                    <div class="session-stat-value">{{ studyStore.sessionStats.reviewed }}</div>
+                    <div class="session-stat-label">{{ t('flashcards', 'Reviewed') }}</div>
+                </div>
+                <div class="session-stat">
+                    <div class="session-stat-value correct">{{ studyStore.sessionStats.correct }}</div>
+                    <div class="session-stat-label">{{ t('flashcards', 'Correct') }}</div>
+                </div>
+                <div class="session-stat">
+                    <div class="session-stat-value again">{{ studyStore.sessionStats.again }}</div>
+                    <div class="session-stat-label">{{ t('flashcards', 'Again') }}</div>
+                </div>
+            </div>
+            <div class="session-actions">
+                <NcButton @click="goBack">{{ t('flashcards', 'Back to decks') }}</NcButton>
+                <NcButton type="primary" @click="restartSession">
+                    {{ t('flashcards', 'Study again') }}
+                </NcButton>
+            </div>
+        </div>
+
+        <!-- Active study card -->
+        <div v-else-if="studyStore.currentCard" class="study-active">
+            <!-- Progress bar -->
+            <div class="study-progress" v-if="settingsStore.get('showProgress')">
+                <div class="progress-bar">
+                    <div class="progress-fill" :style="{ width: studyStore.progress.percent + '%' }"></div>
+                </div>
+                <span class="progress-text">
+                    {{ studyStore.progress.current }} / {{ studyStore.progress.total }}
+                </span>
+            </div>
+
+            <!-- Card display -->
+            <div class="card-container" @click="handleCardClick">
+                <div class="flashcard" :class="{ flipped: studyStore.isFlipped }">
+                    <!-- Front -->
+                    <div class="card-face card-front">
+                        <div class="card-content">
+                            <template v-if="isBasic(studyStore.currentCard)">
+                                <div class="card-word">
+                                    {{ studyStore.isReversed
+                                        ? studyStore.currentCard.back
+                                        : studyStore.currentCard.front }}
+                                </div>
+                                <div v-if="!studyStore.isReversed && studyStore.currentCard.transcription"
+                                    class="card-transcription">
+                                    [{{ studyStore.currentCard.transcription }}]
+                                </div>
+                            </template>
+                            <template v-else-if="isCloze(studyStore.currentCard)">
+                                <div class="card-sentence" v-html="renderCloze(studyStore.currentCard, false)"></div>
+                                <div v-if="studyStore.currentCard.translation" class="card-translation">
+                                    {{ studyStore.currentCard.translation }}
+                                </div>
+                            </template>
+                        </div>
+                        <div class="card-hint">
+                            {{ t('flashcards', 'Tap to reveal') }}
+                        </div>
+                    </div>
+
+                    <!-- Back -->
+                    <div class="card-face card-back">
+                        <div class="card-content">
+                            <template v-if="isBasic(studyStore.currentCard)">
+                                <div class="card-word">
+                                    {{ studyStore.isReversed
+                                        ? studyStore.currentCard.front
+                                        : studyStore.currentCard.back }}
+                                </div>
+                                <div v-if="studyStore.isReversed && studyStore.currentCard.transcription"
+                                    class="card-transcription">
+                                    [{{ studyStore.currentCard.transcription }}]
+                                </div>
+                                <!-- Examples -->
+                                <div v-if="studyStore.currentCard.examples?.length"
+                                    class="card-examples">
+                                    <div v-for="(ex, i) in studyStore.currentCard.examples"
+                                        :key="i"
+                                        class="card-example">
+                                        <div v-for="(line, j) in ex" :key="j">{{ line }}</div>
+                                    </div>
+                                </div>
+                            </template>
+                            <template v-else-if="isCloze(studyStore.currentCard)">
+                                <div class="card-sentence" v-html="renderCloze(studyStore.currentCard, true)"></div>
+                            </template>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TTS button -->
+            <div class="tts-controls" v-if="tts.supported.value">
+                <NcButton @click="speakCard" :disabled="tts.speaking.value">
+                    <template #icon>
+                        <IconVolume :size="20" />
+                    </template>
+                </NcButton>
+            </div>
+
+            <!-- Rating buttons (shown after flip) -->
+            <div v-if="studyStore.isFlipped" class="rating-buttons">
+                <button v-for="rating in ratings"
+                    :key="rating.value"
+                    class="rating-btn"
+                    :style="{ '--rating-color': rating.color }"
+                    @click="submitRating(rating.value)"
+                    :disabled="studyStore.loading">
+                    <span class="rating-label">{{ rating.label }}</span>
+                    <span class="rating-interval" v-if="studyStore.predictions[rating.value]">
+                        {{ studyStore.predictions[rating.value].label }}
+                    </span>
+                </button>
+            </div>
+        </div>
+    </div>
+</template>
+
+<script setup lang="ts">
+import { onMounted, onUnmounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { translate as t } from '@nextcloud/l10n'
+
+import NcButton from '@nextcloud/vue/components/NcButton'
+import NcLoadingIcon from '@nextcloud/vue/components/NcLoadingIcon'
+import IconVolume from 'vue-material-design-icons/VolumeHigh.vue'
+
+import { useStudyStore } from '@/stores/study'
+import { useSettingsStore } from '@/stores/settings'
+import { useDeckStore } from '@/stores/deck'
+import { useTTS } from '@/composables/useTTS'
+import { useKeyboard } from '@/composables/useKeyboard'
+import { isBasicCard, isClozeCard } from '@/types/card'
+import type { BasicCard, ClozeCard, ParsedCard } from '@/types/card'
+import type { Rating } from '@/types/sr'
+import { RATING_LABELS, RATING_COLORS } from '@/types/sr'
+
+const props = defineProps<{ path: string }>()
+const route = useRoute()
+const router = useRouter()
+const studyStore = useStudyStore()
+const settingsStore = useSettingsStore()
+const deckStore = useDeckStore()
+const tts = useTTS()
+
+const ratings = [
+    { value: 0 as Rating, label: t('flashcards', 'Again'), color: RATING_COLORS[0] },
+    { value: 1 as Rating, label: t('flashcards', 'Hard'), color: RATING_COLORS[1] },
+    { value: 2 as Rating, label: t('flashcards', 'Good'), color: RATING_COLORS[2] },
+    { value: 3 as Rating, label: t('flashcards', 'Easy'), color: RATING_COLORS[3] },
+    { value: 4 as Rating, label: t('flashcards', 'Perfect'), color: RATING_COLORS[4] },
+]
+
+function isBasic(card: ParsedCard): card is BasicCard {
+    return isBasicCard(card)
+}
+
+function isCloze(card: ParsedCard): card is ClozeCard {
+    return isClozeCard(card)
+}
+
+function renderCloze(card: ClozeCard, showAnswer: boolean): string {
+    let html = card.sentence
+    for (const c of card.clozes) {
+        const escaped = escapeHtml(c.word)
+        if (showAnswer) {
+            html = html.replace(
+                `==${c.word}==${c.hint ? `^[${c.hint}]` : ''}`,
+                `<span class="cloze-revealed">${escaped}</span>`,
+            )
+        } else {
+            const hint = c.hint ? `<span class="cloze-hint">${escapeHtml(c.hint)}</span>` : '...'
+            html = html.replace(
+                `==${c.word}==${c.hint ? `^[${c.hint}]` : ''}`,
+                `<span class="cloze-blank">[${hint}]</span>`,
+            )
+        }
+    }
+    return html
+}
+
+function escapeHtml(text: string): string {
+    return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+}
+
+function handleCardClick() {
+    if (!studyStore.isFlipped) {
+        studyStore.flipCard()
+    }
+}
+
+function submitRating(rating: Rating) {
+    studyStore.submitRating(rating)
+}
+
+async function speakCard() {
+    const card = studyStore.currentCard
+    if (!card) return
+
+    let text = ''
+    if (isBasicCard(card)) {
+        text = studyStore.isReversed ? card.back : card.front
+    } else if (isClozeCard(card)) {
+        // Speak the full sentence with cloze words
+        text = card.sentence.replace(/==([^=]+)==(?:\^\[[^\]]*\])?/g, '$1')
+    }
+
+    if (text) {
+        await tts.speak(text, settingsStore.get('defaultLanguage') || 'en-US')
+    }
+}
+
+function goBack() {
+    deckStore.closeDeck()
+    router.push({ name: 'decks' })
+}
+
+async function restartSession() {
+    await studyStore.startSession(props.path)
+}
+
+// Keyboard shortcuts
+useKeyboard([
+    { key: ' ', handler: () => {
+        if (!studyStore.isFlipped) studyStore.flipCard()
+    }},
+    { key: '1', handler: () => { if (studyStore.isFlipped) submitRating(0) } },
+    { key: '2', handler: () => { if (studyStore.isFlipped) submitRating(1) } },
+    { key: '3', handler: () => { if (studyStore.isFlipped) submitRating(2) } },
+    { key: '4', handler: () => { if (studyStore.isFlipped) submitRating(3) } },
+    { key: '5', handler: () => { if (studyStore.isFlipped) submitRating(4) } },
+    { key: 'r', handler: () => speakCard() },
+])
+
+onMounted(async () => {
+    await tts.init()
+    const path = props.path || (route.params.path as string)
+    if (path) {
+        await studyStore.startSession(path)
+    }
+})
+
+onUnmounted(() => {
+    tts.stop()
+})
+</script>
+
+<style lang="scss" scoped>
+.study-page {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+    min-height: calc(100vh - 50px);
+}
+
+.study-loading, .study-empty, .study-complete {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 20px;
+    text-align: center;
+    gap: 16px;
+}
+
+.session-stats {
+    display: flex;
+    gap: 32px;
+    margin: 20px 0;
+}
+
+.session-stat-value {
+    font-size: 2em;
+    font-weight: 700;
+
+    &.correct { color: $flashcards-success; }
+    &.again { color: $flashcards-danger; }
+}
+
+.session-stat-label {
+    color: var(--color-text-maxcontrast);
+}
+
+.session-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 16px;
+}
+
+.study-active {
+    width: 100%;
+    max-width: $card-max-width;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.study-progress {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.progress-bar {
+    flex: 1;
+    height: 6px;
+    background: var(--color-background-dark);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background: var(--color-primary);
+    border-radius: 3px;
+    transition: width $transition-normal;
+}
+
+.progress-text {
+    font-size: 0.85em;
+    color: var(--color-text-maxcontrast);
+    white-space: nowrap;
+}
+
+.card-container {
+    width: 100%;
+    min-height: $card-min-height;
+    perspective: 1000px;
+    cursor: pointer;
+    margin-bottom: 20px;
+}
+
+.flashcard {
+    width: 100%;
+    min-height: $card-min-height;
+    position: relative;
+    transform-style: preserve-3d;
+    transition: transform $transition-flip;
+
+    &.flipped {
+        transform: rotateX(180deg);
+    }
+}
+
+.card-face {
+    width: 100%;
+    min-height: $card-min-height;
+    position: absolute;
+    top: 0;
+    left: 0;
+    backface-visibility: hidden;
+    background: var(--color-main-background);
+    border: 2px solid var(--color-border);
+    border-radius: $card-border-radius;
+    padding: $card-padding;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.card-back {
+    transform: rotateX(180deg);
+}
+
+.card-content {
+    text-align: center;
+    width: 100%;
+}
+
+.card-word {
+    font-size: 1.8em;
+    font-weight: 700;
+    margin-bottom: 8px;
+    word-break: break-word;
+}
+
+.card-transcription {
+    font-size: 1.1em;
+    color: var(--color-text-maxcontrast);
+    font-style: italic;
+}
+
+.card-sentence {
+    font-size: 1.3em;
+    line-height: 1.6;
+}
+
+.card-translation {
+    font-size: 1em;
+    color: var(--color-text-maxcontrast);
+    margin-top: 12px;
+}
+
+.card-examples {
+    margin-top: 20px;
+    font-size: 0.95em;
+    color: var(--color-text-light);
+}
+
+.card-example {
+    margin-bottom: 8px;
+    padding: 8px;
+    background: var(--color-background-dark);
+    border-radius: 6px;
+}
+
+.card-hint {
+    font-size: 0.85em;
+    color: var(--color-text-maxcontrast);
+    margin-top: 16px;
+}
+
+:deep(.cloze-blank) {
+    display: inline-block;
+    min-width: 60px;
+    padding: 2px 8px;
+    background: var(--color-primary-element-light);
+    border-radius: 4px;
+    font-weight: 600;
+}
+
+:deep(.cloze-hint) {
+    font-style: italic;
+    font-size: 0.9em;
+}
+
+:deep(.cloze-revealed) {
+    font-weight: 700;
+    color: var(--color-primary);
+    text-decoration: underline;
+}
+
+.tts-controls {
+    margin-bottom: 12px;
+}
+
+.rating-buttons {
+    display: flex;
+    gap: 8px;
+    width: 100%;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.rating-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 12px 20px;
+    border: 2px solid var(--rating-color);
+    border-radius: 10px;
+    background: transparent;
+    color: var(--color-main-text);
+    cursor: pointer;
+    transition: background $transition-fast, transform $transition-fast;
+    min-width: 80px;
+
+    &:hover {
+        background: color-mix(in srgb, var(--rating-color) 15%, transparent);
+        transform: translateY(-2px);
+    }
+
+    &:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+}
+
+.rating-label {
+    font-weight: 700;
+    font-size: 0.95em;
+    color: var(--rating-color);
+}
+
+.rating-interval {
+    font-size: 0.8em;
+    color: var(--color-text-maxcontrast);
+    margin-top: 4px;
+}
+</style>

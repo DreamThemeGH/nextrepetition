@@ -1,0 +1,44 @@
+<?xml version="1.0"?>
+<info xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:noNamespaceSchemaLocation="https://apps.nextcloud.com/schema/apps/info.xsd">
+    <id>flashcards</id>
+    <name>Flashcards</name>
+    <summary>Spaced repetition flashcards for language learning — powered by Markdown files</summary>
+    <description><![CDATA[
+# Nextcloud Flashcards v2
+
+A file-based spaced repetition flashcard app for Nextcloud.
+
+## Key Principle
+**Your .md files are the single source of truth.** Cards, translations, and SR metadata all live in standard Obsidian Spaced Repetition format Markdown files stored in your Nextcloud Files.
+
+## Features
+- **File-based storage** — cards stored in .md files, compatible with Obsidian SR
+- **SM-2 algorithm** — intelligent review scheduling written back to .md files
+- **Card formats** — Basic (word:::translation), Cloze (==word==^[hint]), transcriptions
+- **Auto-save** — changes buffered in memory, saved to .md every 10 seconds
+- **Text-to-Speech** — Edge TTS + Web Speech API fallback
+- **Study statistics** — computed from SR metadata in your files
+- **Git conflict resolution** — auto-resolves merge conflicts in SR tags
+- **Dark/light theme** — follows Nextcloud theme
+- **Keyboard shortcuts** — Space to reveal, 1-5 to rate
+- **Multilingual** — English, Russian, Serbian
+    ]]></description>
+    <version>2.0.0</version>
+    <licence>agpl</licence>
+    <author>Nextcloud Flashcards</author>
+    <namespace>Flashcards</namespace>
+    <category>organization</category>
+    <dependencies>
+        <nextcloud min-version="28" max-version="32"/>
+        <php min-version="8.1"/>
+    </dependencies>
+    <navigations>
+        <navigation>
+            <name>Flashcards</name>
+            <route>flashcards.page.index</route>
+            <icon>app.svg</icon>
+            <order>10</order>
+        </navigation>
+    </navigations>
+</info>

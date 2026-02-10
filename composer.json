@@ -1,0 +1,34 @@
+{
+    "name": "nextcloud/flashcards",
+    "description": "Nextcloud Flashcards v2 — File-based spaced repetition",
+    "type": "project",
+    "license": "AGPL-3.0-or-later",
+    "require": {
+        "php": ">=8.1"
+    },
+    "require-dev": {
+        "nextcloud/ocp": "^28",
+        "phpunit/phpunit": "^10",
+        "nextcloud/coding-standard": "^1"
+    },
+    "autoload": {
+        "psr-4": {
+            "OCA\\Flashcards\\": "lib/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "OCA\\Flashcards\\Tests\\": "tests/",
+            "OCP\\": "vendor/nextcloud/ocp/OCP/"
+        }
+    },
+    "scripts": {
+        "test": "phpunit --configuration tests/phpunit.xml",
+        "lint": "php-cs-fixer fix --dry-run --diff"
+    },
+    "config": {
+        "allow-plugins": {
+            "composer/installers": true
+        }
+    }
+}
