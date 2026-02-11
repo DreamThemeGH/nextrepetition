@@ -17,8 +17,8 @@
                         <IconCards :size="20" />
                     </template>
                     <template #counter>
-                        <NcCounterBubble v-if="deckStore.totalDue > 0" type="highlighted">
-                            {{ deckStore.totalDue }}
+                        <NcCounterBubble v-if="dueCount > 0" type="highlighted">
+                            {{ dueCount }}
                         </NcCounterBubble>
                     </template>
                 </NcAppNavigationItem>
@@ -48,7 +48,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted } from 'vue'
+import { onMounted, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { translate as t } from '@nextcloud/l10n'
 
@@ -70,6 +70,10 @@ import { useAutoSave } from '@/composables/useAutoSave'
 const route = useRoute()
 const deckStore = useDeckStore()
 const settingsStore = useSettingsStore()
+const dueCount = computed(() => {
+    const val = deckStore.totalDue
+    return Number.isFinite(val) ? val : 0
+})
 
 useAutoSave()
 

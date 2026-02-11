@@ -63,12 +63,14 @@
             @closing="showCreate = false">
             <div class="create-form">
                 <label>{{ t('flashcards', 'Deck name') }}</label>
-                <NcTextField :value.sync="newDeckName"
-                    :placeholder="t('flashcards', 'My flashcards')" />
+                <NcTextField :value="newDeckName"
+                    :placeholder="t('flashcards', 'My flashcards')"
+                    @update:value="v => newDeckName = v" />
 
                 <label>{{ t('flashcards', 'Subfolder (optional)') }}</label>
-                <NcTextField :value.sync="newDeckFolder"
-                    :placeholder="t('flashcards', 'e.g. Serbian learning')" />
+                <NcTextField :value="newDeckFolder"
+                    :placeholder="t('flashcards', 'e.g. Serbian learning')"
+                    @update:value="v => newDeckFolder = v" />
             </div>
             <template #actions>
                 <NcButton @click="showCreate = false">{{ t('flashcards', 'Cancel') }}</NcButton>

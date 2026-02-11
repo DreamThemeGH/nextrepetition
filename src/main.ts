@@ -9,11 +9,9 @@ import { createPinia } from 'pinia'
 import { router } from './router'
 import App from './App.vue'
 
-// Set app metadata for @nextcloud/vue
-if (window && window.OC) {
-    window.OC.appConfig = window.OC.appConfig || {}
-    window.OC.appConfig.flashcards = window.OC.appConfig.flashcards || {}
-}
+// Set app metadata required by @nextcloud/vue
+;(window as any).appName = 'flashcards'
+;(window as any).appVersion = '2.0.0'
 
 const app = createApp(App)
 app.use(createPinia())

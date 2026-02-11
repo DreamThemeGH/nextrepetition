@@ -16,9 +16,9 @@
                 <div class="setting-row">
                     <label>{{ t('flashcards', 'Deck folder path') }}</label>
                     <div class="setting-input">
-                        <NcTextField :value.sync="localSettings.deckFolder"
+                        <NcTextField :value="localSettings.deckFolder"
                             :placeholder="'/ObsidianSync'"
-                            @update:value="markDirty" />
+                            @update:value="v => { localSettings.deckFolder = v; markDirty() }" />
                         <p class="setting-help">
                             {{ t('flashcards', 'Path to the folder containing your .md flashcard files, relative to your Nextcloud Files root.') }}
                         </p>
@@ -71,22 +71,22 @@
                 </div>
 
                 <div class="setting-row">
-                    <NcCheckboxRadioSwitch :checked.sync="localSettings.showProgress"
-                        @update:checked="markDirty">
+                    <NcCheckboxRadioSwitch :checked="localSettings.showProgress"
+                        @update:checked="v => { localSettings.showProgress = v; markDirty() }">
                         {{ t('flashcards', 'Show progress bar') }}
                     </NcCheckboxRadioSwitch>
                 </div>
 
                 <div class="setting-row">
-                    <NcCheckboxRadioSwitch :checked.sync="localSettings.keyboardShortcuts"
-                        @update:checked="markDirty">
+                    <NcCheckboxRadioSwitch :checked="localSettings.keyboardShortcuts"
+                        @update:checked="v => { localSettings.keyboardShortcuts = v; markDirty() }">
                         {{ t('flashcards', 'Enable keyboard shortcuts') }}
                     </NcCheckboxRadioSwitch>
                 </div>
 
                 <div class="setting-row">
-                    <NcCheckboxRadioSwitch :checked.sync="localSettings.fullscreenMode"
-                        @update:checked="markDirty">
+                    <NcCheckboxRadioSwitch :checked="localSettings.fullscreenMode"
+                        @update:checked="v => { localSettings.fullscreenMode = v; markDirty() }">
                         {{ t('flashcards', 'Fullscreen study mode') }}
                     </NcCheckboxRadioSwitch>
                 </div>
@@ -97,24 +97,24 @@
                 <h3>{{ t('flashcards', 'Text-to-Speech') }}</h3>
 
                 <div class="setting-row">
-                    <NcCheckboxRadioSwitch :checked.sync="localSettings.autoPlayAudio"
-                        @update:checked="markDirty">
+                    <NcCheckboxRadioSwitch :checked="localSettings.autoPlayAudio"
+                        @update:checked="v => { localSettings.autoPlayAudio = v; markDirty() }">
                         {{ t('flashcards', 'Auto-play audio for cards') }}
                     </NcCheckboxRadioSwitch>
                 </div>
 
                 <div class="setting-row">
                     <label>{{ t('flashcards', 'Default language') }}</label>
-                    <NcTextField :value.sync="localSettings.defaultLanguage"
+                    <NcTextField :value="localSettings.defaultLanguage"
                         placeholder="en-US"
-                        @update:value="markDirty" />
+                        @update:value="v => { localSettings.defaultLanguage = v; markDirty() }" />
                 </div>
 
                 <div class="setting-row">
                     <label>{{ t('flashcards', 'TTS voice') }}</label>
-                    <NcTextField :value.sync="localSettings.ttsVoice"
+                    <NcTextField :value="localSettings.ttsVoice"
                         placeholder="en-US-AriaNeural"
-                        @update:value="markDirty" />
+                        @update:value="v => { localSettings.ttsVoice = v; markDirty() }" />
                 </div>
             </div>
 
