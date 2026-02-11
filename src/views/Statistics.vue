@@ -116,13 +116,13 @@ const chartOptions = computed(() => ({
     scales: {
         x: {
             grid: { display: false },
-            ticks: { color: 'var(--color-text-maxcontrast)' },
+            ticks: { color: '#e0e0e0' },
         },
         y: {
             beginAtZero: true,
             grid: { color: 'rgba(128, 128, 128, 0.15)' },
             ticks: {
-                color: 'var(--color-text-maxcontrast)',
+                color: '#e0e0e0',
                 precision: 0,
             },
         },

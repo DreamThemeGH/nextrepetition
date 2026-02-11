@@ -24,13 +24,21 @@ export const useDeckStore = defineStore('deck', () => {
     const currentTag = ref('')
     const dirty = ref(false)
 
-    const totalDue = computed(() =>
-        decks.value.reduce((sum, d) => sum + (Number(d.dueCards) || 0), 0),
-    )
+    const totalDue = computed(() => {
+        if (!decks.value || decks.value.length === 0) return 0
+        return decks.value.reduce((sum, d) => {
+            const val = Number(d.dueCards)
+            return sum + (Number.isFinite(val) ? val : 0)
+        }, 0)
+    })
 
-    const totalNew = computed(() =>
-        decks.value.reduce((sum, d) => sum + (Number(d.newCards) || 0), 0),
-    )
+    const totalNew = computed(() => {
+        if (!decks.value || decks.value.length === 0) return 0
+        return decks.value.reduce((sum, d) => {
+            const val = Number(d.newCards)
+            return sum + (Number.isFinite(val) ? val : 0)
+        }, 0)
+    })
 
     const currentDeck = computed(() =>
         decks.value.find(d => d.path === currentPath.value) ?? null,

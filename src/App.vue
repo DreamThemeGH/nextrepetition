@@ -18,7 +18,7 @@
                     </template>
                     <template #counter>
                         <NcCounterBubble v-if="dueCount > 0" type="highlighted">
-                            {{ String(dueCount) }}
+                            {{ dueCount }}
                         </NcCounterBubble>
                     </template>
                 </NcAppNavigationItem>
