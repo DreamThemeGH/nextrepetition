@@ -24,11 +24,11 @@ export const RATING_LABELS: Record<Rating, string> = {
 }
 
 export const RATING_COLORS: Record<Rating, string> = {
-    0: '#c92a2a',
-    1: '#e67700',
-    2: '#2d8c3c',
-    3: '#1971c2',
-    4: '#6741d9',
+    0: 'var(--flashcards-rating-again, #c92a2a)',
+    1: 'var(--flashcards-rating-hard, #e67700)',
+    2: 'var(--flashcards-rating-good, #2d8c3c)',
+    3: 'var(--flashcards-rating-easy, #1971c2)',
+    4: 'var(--flashcards-rating-perfect, #6741d9)',
 }
 
 export interface ReviewResult {

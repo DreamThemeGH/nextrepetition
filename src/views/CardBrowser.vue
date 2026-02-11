@@ -29,9 +29,11 @@
         <!-- Card list -->
         <div v-else class="card-list">
             <div class="card-filters">
-                <NcTextField :value.sync="search"
+                <NcTextField :value="search"
                     :placeholder="t('flashcards', 'Search cards...')"
-                    class="search-input" />
+                    :aria-label="t('flashcards', 'Search cards...')"
+                    class="search-input"
+                    @update:value="v => search = v" />
                 <select v-model="stateFilter" class="state-filter">
                     <option value="">{{ t('flashcards', 'All states') }}</option>
                     <option value="new">{{ t('flashcards', 'New') }}</option>
@@ -44,15 +46,19 @@
                 <div v-for="card in filteredCards"
                     :key="card.index"
                     class="card-row"
-                    @click="selectedCard = card">
+                    role="button"
+                    tabindex="0"
+                    @click="openEditCard(card)"
+                    @keydown.enter="openEditCard(card)"
+                    @keydown.space.prevent="openEditCard(card)">
                     <div class="card-state-badge" :class="'state-' + card.state">
                         {{ card.state }}
                     </div>
                     <div class="card-preview">
                         <template v-if="card.type === 'basic'">
-                            <span class="card-front-text">{{ (card as any).front }}</span>
+                            <span class="card-front-text">{{ ('front' in card) ? card.front : '' }}</span>
                             <span class="card-separator">→</span>
-                            <span class="card-back-text">{{ (card as any).back }}</span>
+                            <span class="card-back-text">{{ ('back' in card) ? card.back : '' }}</span>
                         </template>
                         <template v-else>
                             <span class="card-front-text">{{ card.rawLine?.substring(0, 80) }}</span>
@@ -81,33 +87,87 @@
                 <template v-if="newCardType === 'basic'">
                     <div class="form-group">
                         <label>{{ t('flashcards', 'Front') }}</label>
-                        <NcTextField :value.sync="newFront" :placeholder="t('flashcards', 'Word or phrase')" />
+                        <NcTextField :value="newFront" :placeholder="t('flashcards', 'Word or phrase')" @update:value="v => newFront = v" />
                     </div>
                     <div class="form-group">
                         <label>{{ t('flashcards', 'Back') }}</label>
-                        <NcTextField :value.sync="newBack" :placeholder="t('flashcards', 'Translation')" />
+                        <NcTextField :value="newBack" :placeholder="t('flashcards', 'Translation')" @update:value="v => newBack = v" />
                     </div>
                     <div class="form-group">
                         <label>{{ t('flashcards', 'Transcription (optional)') }}</label>
-                        <NcTextField :value.sync="newTranscription" placeholder="IPA" />
+                        <NcTextField :value="newTranscription" placeholder="IPA" @update:value="v => newTranscription = v" />
                     </div>
                 </template>
 
                 <template v-else>
                     <div class="form-group">
                         <label>{{ t('flashcards', 'Sentence with ==cloze==') }}</label>
-                        <NcTextField :value.sync="newSentence"
-                            :placeholder="t('flashcards', 'I ==like==^[люблю] pizza')" />
+                        <NcTextField :value="newSentence"
+                            :placeholder="t('flashcards', 'I ==like==^[люблю] pizza')"
+                            @update:value="v => newSentence = v" />
                     </div>
                     <div class="form-group">
                         <label>{{ t('flashcards', 'Translation') }}</label>
-                        <NcTextField :value.sync="newTranslation" :placeholder="t('flashcards', 'Я люблю пиццу')" />
+                        <NcTextField :value="newTranslation" :placeholder="t('flashcards', 'Я люблю пиццу')" @update:value="v => newTranslation = v" />
                     </div>
                 </template>
             </div>
             <template #actions>
                 <NcButton @click="showAddCard = false">{{ t('flashcards', 'Cancel') }}</NcButton>
-                <NcButton type="primary" @click="handleAddCard">{{ t('flashcards', 'Add') }}</NcButton>
+                <NcButton type="primary" @click="handleAddCard" :disabled="!canAddCard">{{ t('flashcards', 'Add') }}</NcButton>
+            </template>
+        </NcDialog>
+
+        <!-- Edit card dialog -->
+        <NcDialog v-if="editCard !== null"
+            :name="t('flashcards', 'Edit card')"
+            @closing="editCard = null">
+            <div class="add-card-form">
+                <template v-if="editCard.type === 'basic'">
+                    <div class="form-group">
+                        <label>{{ t('flashcards', 'Front') }}</label>
+                        <NcTextField :value="editFront" :placeholder="t('flashcards', 'Word or phrase')" @update:value="v => editFront = v" />
+                    </div>
+                    <div class="form-group">
+                        <label>{{ t('flashcards', 'Back') }}</label>
+                        <NcTextField :value="editBack" :placeholder="t('flashcards', 'Translation')" @update:value="v => editBack = v" />
+                    </div>
+                    <div class="form-group">
+                        <label>{{ t('flashcards', 'Transcription (optional)') }}</label>
+                        <NcTextField :value="editTranscription" placeholder="IPA" @update:value="v => editTranscription = v" />
+                    </div>
+                </template>
+                <template v-else>
+                    <div class="form-group">
+                        <label>{{ t('flashcards', 'Sentence with ==cloze==') }}</label>
+                        <NcTextField :value="editSentence"
+                            :placeholder="t('flashcards', 'I ==like==^[люблю] pizza')"
+                            @update:value="v => editSentence = v" />
+                    </div>
+                    <div class="form-group">
+                        <label>{{ t('flashcards', 'Translation') }}</label>
+                        <NcTextField :value="editTranslation" :placeholder="t('flashcards', 'Я люблю пиццу')" @update:value="v => editTranslation = v" />
+                    </div>
+                </template>
+            </div>
+            <template #actions>
+                <NcButton type="error" @click="handleDeleteCard">
+                    <template #icon><IconDelete :size="20" /></template>
+                    {{ t('flashcards', 'Delete') }}
+                </NcButton>
+                <NcButton @click="editCard = null">{{ t('flashcards', 'Cancel') }}</NcButton>
+                <NcButton type="primary" @click="handleEditCard" :disabled="!canSaveEdit">{{ t('flashcards', 'Save') }}</NcButton>
+            </template>
+        </NcDialog>
+
+        <!-- Delete confirmation dialog -->
+        <NcDialog v-if="confirmDelete"
+            :name="t('flashcards', 'Delete card')"
+            @closing="confirmDelete = false">
+            <p>{{ t('flashcards', 'Are you sure you want to delete this card? This action cannot be undone.') }}</p>
+            <template #actions>
+                <NcButton @click="confirmDelete = false">{{ t('flashcards', 'Cancel') }}</NcButton>
+                <NcButton type="error" @click="doDeleteCard">{{ t('flashcards', 'Delete') }}</NcButton>
             </template>
         </NcDialog>
     </div>
@@ -117,6 +177,7 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { translate as t } from '@nextcloud/l10n'
+import { showError, showSuccess } from '@nextcloud/dialogs'
 
 import NcButton from '@nextcloud/vue/components/NcButton'
 import NcDialog from '@nextcloud/vue/components/NcDialog'
@@ -124,10 +185,12 @@ import NcLoadingIcon from '@nextcloud/vue/components/NcLoadingIcon'
 import NcTextField from '@nextcloud/vue/components/NcTextField'
 import IconBack from 'vue-material-design-icons/ArrowLeft.vue'
 import IconPlus from 'vue-material-design-icons/Plus.vue'
+import IconDelete from 'vue-material-design-icons/Delete.vue'
 
 import { useDeckStore } from '@/stores/deck'
 import * as api from '@/services/api'
 import type { ParsedCard } from '@/types/card'
+import { isBasicCard } from '@/types/card'
 
 const props = defineProps<{ path: string }>()
 const route = useRoute()
@@ -139,6 +202,15 @@ const cards = ref<ParsedCard[]>([])
 const search = ref('')
 const stateFilter = ref('')
 const selectedCard = ref<ParsedCard | null>(null)
+
+// Edit card form
+const editCard = ref<ParsedCard | null>(null)
+const editFront = ref('')
+const editBack = ref('')
+const editTranscription = ref('')
+const editSentence = ref('')
+const editTranslation = ref('')
+const confirmDelete = ref(false)
 
 // Add card form
 const showAddCard = ref(false)
@@ -171,6 +243,33 @@ const filteredCards = computed(() => {
 
     return result
 })
+
+const canAddCard = computed(() => {
+    if (newCardType.value === 'basic') {
+        return newFront.value.trim().length > 0 && newBack.value.trim().length > 0
+    }
+    return newSentence.value.trim().length > 0 && newSentence.value.includes('==')
+})
+
+const canSaveEdit = computed(() => {
+    if (!editCard.value) return false
+    if (editCard.value.type === 'basic') {
+        return editFront.value.trim().length > 0 && editBack.value.trim().length > 0
+    }
+    return editSentence.value.trim().length > 0 && editSentence.value.includes('==')
+})
+
+function openEditCard(card: ParsedCard) {
+    editCard.value = card
+    if (isBasicCard(card)) {
+        editFront.value = card.front
+        editBack.value = card.back
+        editTranscription.value = card.transcription ?? ''
+    } else {
+        editSentence.value = card.sentence
+        editTranslation.value = card.translation ?? ''
+    }
+}
 
 function goBack() {
     deckStore.closeDeck()
@@ -211,8 +310,60 @@ async function handleAddCard() {
         newTranscription.value = ''
         newSentence.value = ''
         newTranslation.value = ''
+        showSuccess(t('flashcards', 'Card added'))
     } catch (e) {
-        console.error('Failed to add card:', e)
+        showError(e instanceof Error ? e.message : t('flashcards', 'Failed to add card'))
+    }
+}
+
+async function handleEditCard() {
+    if (!editCard.value) return
+    const path = props.path || (route.params.path as string)
+    if (!path) return
+
+    try {
+        const data: Record<string, string> = {}
+        if (editCard.value.type === 'basic') {
+            data.type = 'basic'
+            data.front = editFront.value
+            data.back = editBack.value
+            if (editTranscription.value.trim()) {
+                data.transcription = editTranscription.value
+            }
+        } else {
+            data.type = 'cloze'
+            data.sentence = editSentence.value
+            if (editTranslation.value.trim()) {
+                data.translation = editTranslation.value
+            }
+        }
+
+        await api.updateCard(path, editCard.value.index, data)
+        cards.value = await api.fetchCards(path)
+        editCard.value = null
+        showSuccess(t('flashcards', 'Card updated'))
+    } catch (e) {
+        showError(e instanceof Error ? e.message : t('flashcards', 'Failed to update card'))
+    }
+}
+
+function handleDeleteCard() {
+    confirmDelete.value = true
+}
+
+async function doDeleteCard() {
+    if (!editCard.value) return
+    const path = props.path || (route.params.path as string)
+    if (!path) return
+
+    try {
+        await api.deleteCard(path, editCard.value.index)
+        cards.value = await api.fetchCards(path)
+        confirmDelete.value = false
+        editCard.value = null
+        showSuccess(t('flashcards', 'Card deleted'))
+    } catch (e) {
+        showError(e instanceof Error ? e.message : t('flashcards', 'Failed to delete card'))
     }
 }
 

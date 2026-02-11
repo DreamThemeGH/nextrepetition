@@ -18,29 +18,37 @@
                     @click="goToDecks"
                     @keydown.enter="goToDecks"
                     @keydown.space.prevent="goToDecks">
-                    <div class="summary-icon">📚</div>
+                    <div class="summary-icon" aria-hidden="true">📚</div>
                     <div class="summary-number">{{ stats?.totalDue ?? 0 }}</div>
                     <div class="summary-label">{{ t('flashcards', 'Cards due today') }}</div>
                 </div>
-                <div class="summary-card summary-new">
-                    <div class="summary-icon">✨</div>
+                <div class="summary-card summary-new"
+                    role="status"
+                    :aria-label="t('flashcards', 'New cards') + ': ' + (stats?.totalNew ?? 0)">
+                    <div class="summary-icon" aria-hidden="true">✨</div>
                     <div class="summary-number">{{ stats?.totalNew ?? 0 }}</div>
                     <div class="summary-label">{{ t('flashcards', 'New cards') }}</div>
                 </div>
-                <div class="summary-card summary-total">
-                    <div class="summary-icon">🗂️</div>
+                <div class="summary-card summary-total"
+                    role="status"
+                    :aria-label="t('flashcards', 'Total cards') + ': ' + (stats?.totalCards ?? 0)">
+                    <div class="summary-icon" aria-hidden="true">🗂️</div>
                     <div class="summary-number">{{ stats?.totalCards ?? 0 }}</div>
                     <div class="summary-label">{{ t('flashcards', 'Total cards') }}</div>
                 </div>
-                <div class="summary-card summary-decks">
-                    <div class="summary-icon">📂</div>
+                <div class="summary-card summary-decks"
+                    role="status"
+                    :aria-label="t('flashcards', 'Decks') + ': ' + (stats?.totalDecks ?? 0)">
+                    <div class="summary-icon" aria-hidden="true">📂</div>
                     <div class="summary-number">{{ stats?.totalDecks ?? 0 }}</div>
                     <div class="summary-label">{{ t('flashcards', 'Decks') }}</div>
                 </div>
-                <div class="summary-card summary-reviewed">
-                    <div class="summary-icon">✅</div>
+                <div class="summary-card summary-reviewed"
+                    role="status"
+                    :aria-label="t('flashcards', 'Reviewed') + ': ' + (stats?.totalReviewed ?? 0)">
+                    <div class="summary-icon" aria-hidden="true">✅</div>
                     <div class="summary-number">{{ stats?.totalReviewed ?? 0 }}</div>
-                    <div class="summary-label">{{ t('flashcards', 'Reviewed today') }}</div>
+                    <div class="summary-label">{{ t('flashcards', 'Reviewed') }}</div>
                 </div>
             </div>
 

@@ -40,13 +40,28 @@ export function useAutoSave() {
         }
     }
 
+    async function flush() {
+        if (deckStore.dirty && deckStore.currentPath && !saving.value) {
+            saving.value = true
+            try {
+                await deckStore.saveDeck()
+            } finally {
+                saving.value = false
+            }
+        }
+    }
+
     onMounted(start)
-    onUnmounted(stop)
+    onUnmounted(() => {
+        stop()
+        // Flush any unsaved changes before unmounting
+        flush()
+    })
 
     // Restart when interval setting changes
     watch(() => settingsStore.settings.autoSaveInterval, () => {
         start()
     })
 
-    return { saving, start, stop }
+    return { saving, start, stop, flush }
 }

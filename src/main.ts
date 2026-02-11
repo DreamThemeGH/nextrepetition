@@ -10,8 +10,11 @@ import { router } from './router'
 import App from './App.vue'
 
 // Set app metadata required by @nextcloud/vue
-;(window as any).appName = 'flashcards'
-;(window as any).appVersion = '2.0.0'
+declare global {
+    interface Window { appName: string; appVersion: string }
+}
+window.appName = 'flashcards'
+window.appVersion = '2.0.0'
 
 const app = createApp(App)
 app.use(createPinia())

@@ -1,5 +1,9 @@
 <template>
-    <div class="study-page">
+    <div class="study-page"
+        :class="[
+            'layout-' + cardLayout,
+            { 'study-fullscreen': fullscreenMode, 'buttons-right': buttonPosition === 'right' }
+        ]">
         <!-- Loading -->
         <div v-if="studyStore.loading && !studyStore.currentCard" class="study-loading">
             <NcLoadingIcon :size="44" />
@@ -43,7 +47,12 @@
         <!-- Active study card -->
         <div v-else-if="studyStore.currentCard" class="study-active">
             <!-- Progress bar -->
-            <div class="study-progress" v-if="settingsStore.get('showProgress')">
+            <div class="study-progress" v-if="settingsStore.get('showProgress')"
+                role="progressbar"
+                :aria-valuenow="studyStore.progress.percent"
+                :aria-valuemin="0"
+                :aria-valuemax="100"
+                :aria-label="t('flashcards', 'Study progress')">
                 <div class="progress-bar">
                     <div class="progress-fill" :style="{ width: studyStore.progress.percent + '%' }"></div>
                 </div>
@@ -53,7 +62,13 @@
             </div>
 
             <!-- Card display -->
-            <div class="card-container" @click="handleCardClick">
+            <div class="card-container"
+                role="button"
+                tabindex="0"
+                :aria-label="studyStore.isFlipped ? t('flashcards', 'Flashcard (revealed)') : t('flashcards', 'Tap to reveal')"
+                @click="handleCardClick"
+                @keydown.enter="handleCardClick"
+                @keydown.space.prevent="handleCardClick">
                 <div class="flashcard" :class="{ flipped: studyStore.isFlipped }">
                     <!-- Front -->
                     <div class="card-face card-front">
@@ -112,9 +127,22 @@
                 </div>
             </div>
 
-            <!-- TTS button -->
-            <div class="tts-controls" v-if="tts.supported.value">
-                <NcButton @click="speakCard" :disabled="tts.speaking.value">
+            <!-- Study controls -->
+            <div class="study-controls">
+                <!-- Reverse direction button (basic cards only) -->
+                <NcButton v-if="isBasic(studyStore.currentCard)"
+                    :aria-label="t('flashcards', 'Reverse direction')"
+                    :aria-pressed="String(studyStore.isReversed)"
+                    @click="studyStore.toggleDirection()">
+                    <template #icon>
+                        <IconSwap :size="20" />
+                    </template>
+                </NcButton>
+                <!-- TTS button -->
+                <NcButton v-if="tts.supported.value"
+                    @click="speakCard"
+                    :disabled="tts.speaking.value"
+                    :aria-label="t('flashcards', 'Read aloud')">
                     <template #icon>
                         <IconVolume :size="20" />
                     </template>
@@ -127,6 +155,7 @@
                     :key="rating.value"
                     class="rating-btn"
                     :style="{ '--rating-color': rating.color }"
+                    :aria-label="rating.label + (studyStore.predictions[rating.value] ? ' — ' + studyStore.predictions[rating.value].label : '')"
                     @click="submitRating(rating.value)"
                     :disabled="studyStore.loading">
                     <span class="rating-label">{{ rating.label }}</span>
@@ -140,13 +169,14 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, onUnmounted } from 'vue'
+import { onMounted, onUnmounted, watch, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { translate as t } from '@nextcloud/l10n'
 
 import NcButton from '@nextcloud/vue/components/NcButton'
 import NcLoadingIcon from '@nextcloud/vue/components/NcLoadingIcon'
 import IconVolume from 'vue-material-design-icons/VolumeHigh.vue'
+import IconSwap from 'vue-material-design-icons/SwapHorizontal.vue'
 
 import { useStudyStore } from '@/stores/study'
 import { useSettingsStore } from '@/stores/settings'
@@ -166,6 +196,10 @@ const settingsStore = useSettingsStore()
 const deckStore = useDeckStore()
 const tts = useTTS()
 
+const cardLayout = computed(() => settingsStore.get('cardLayout') || 'classic')
+const fullscreenMode = computed(() => settingsStore.get('fullscreenMode') === true)
+const buttonPosition = computed(() => settingsStore.get('buttonPosition') || 'bottom')
+
 const ratings = [
     { value: 0 as Rating, label: t('flashcards', 'Again'), color: RATING_COLORS[0] },
     { value: 1 as Rating, label: t('flashcards', 'Hard'), color: RATING_COLORS[1] },
@@ -183,18 +217,21 @@ function isCloze(card: ParsedCard): card is ClozeCard {
 }
 
 function renderCloze(card: ClozeCard, showAnswer: boolean): string {
-    let html = card.sentence
+    // Escape the full sentence first to prevent XSS
+    let html = escapeHtml(card.sentence)
     for (const c of card.clozes) {
         const escaped = escapeHtml(c.word)
+        // The pattern in the escaped sentence uses &amp; &lt; &gt; etc.
+        const escapedPattern = escapeHtml(`==${c.word}==${c.hint ? `^[${c.hint}]` : ''}`)
         if (showAnswer) {
             html = html.replace(
-                `==${c.word}==${c.hint ? `^[${c.hint}]` : ''}`,
+                escapedPattern,
                 `<span class="cloze-revealed">${escaped}</span>`,
             )
         } else {
             const hint = c.hint ? `<span class="cloze-hint">${escapeHtml(c.hint)}</span>` : '...'
             html = html.replace(
-                `==${c.word}==${c.hint ? `^[${c.hint}]` : ''}`,
+                escapedPattern,
                 `<span class="cloze-blank">[${hint}]</span>`,
             )
         }
@@ -254,6 +291,13 @@ useKeyboard([
     { key: '5', handler: () => { if (studyStore.isFlipped) submitRating(4) } },
     { key: 'r', handler: () => speakCard() },
 ])
+
+// Auto-play audio when a new card appears
+watch(() => studyStore.currentCard, (card) => {
+    if (card && settingsStore.get('autoPlayAudio') && tts.supported.value) {
+        speakCard()
+    }
+})
 
 onMounted(async () => {
     await tts.init()
@@ -457,7 +501,10 @@ onUnmounted(() => {
     text-decoration: underline;
 }
 
-.tts-controls {
+.study-controls {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
     margin-bottom: 12px;
 }
 
@@ -503,5 +550,57 @@ onUnmounted(() => {
     font-size: 0.8em;
     color: var(--color-text-maxcontrast);
     margin-top: 4px;
+}
+
+// Layout variants
+.layout-compact {
+    .flashcard {
+        min-height: 200px;
+    }
+    .card-word {
+        font-size: 1.4rem;
+    }
+}
+
+.layout-minimal {
+    .flashcard {
+        min-height: 150px;
+        box-shadow: none;
+        border: 1px solid var(--color-border);
+    }
+    .card-word {
+        font-size: 1.2rem;
+    }
+    .card-hint, .card-transcription, .card-translation {
+        display: none;
+    }
+}
+
+// Fullscreen mode
+.study-fullscreen {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    background: var(--color-main-background);
+    padding: 20px;
+    overflow-y: auto;
+}
+
+// Buttons on the right
+.buttons-right {
+    .study-active {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        grid-template-rows: auto 1fr auto;
+        gap: 16px;
+    }
+    .study-progress { grid-column: 1 / -1; }
+    .card-container { grid-column: 1; grid-row: 2; }
+    .rating-buttons {
+        grid-column: 2;
+        grid-row: 2;
+        flex-direction: column;
+        width: auto;
+    }
 }
 </style>

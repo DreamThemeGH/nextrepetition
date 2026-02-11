@@ -8,6 +8,7 @@
 
 import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
+import { showError } from '@nextcloud/dialogs'
 import type { DeckMeta, DeckOpenResult, FolderInfo } from '@/types/deck'
 import type { ParsedCard } from '@/types/card'
 import type {
@@ -30,6 +31,25 @@ function url(path: string): string {
 function extract<T>(response: { data: any }): T {
     return response.data?.ocs?.data ?? response.data
 }
+
+// Centralized error interceptor
+axios.interceptors.response.use(
+    (response) => response,
+    (error) => {
+        const status = error?.response?.status
+        const ocsMessage = error?.response?.data?.ocs?.meta?.message
+        const message = ocsMessage || error?.message || 'Unknown error'
+
+        // Don't double-show for 401 (NC handles redirect)
+        if (status !== 401) {
+            console.error(`[flashcards] API error ${status ?? ''}:`, message)
+        }
+
+        return Promise.reject(
+            new Error(message),
+        )
+    },
+)
 
 // ─── Decks ────────────────────────────────────────────────
 
