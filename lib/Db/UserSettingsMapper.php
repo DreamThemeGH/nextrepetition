@@ -58,7 +58,7 @@ class UserSettingsMapper extends QBMapper {
         } catch (DoesNotExistException) {
             $entity = new UserSettings();
             $entity->setUserId($userId);
-            $entity->setSettings(json_encode(UserSettings::DEFAULTS, JSON_UNESCAPED_UNICODE));
+            $entity->setGlobalSettings(json_encode(UserSettings::DEFAULTS, JSON_UNESCAPED_UNICODE));
             $entity->setCreatedAt(time());
             $entity->setUpdatedAt(time());
             return $this->insert($entity);

@@ -13,7 +13,7 @@ return [
     'ocs' => [
         // === Decks (= .md files) ===
         ['name' => 'deck#index',   'url' => '/api/v1/decks',               'verb' => 'GET'],
-        ['name' => 'deck#open',    'url' => '/api/v1/decks/open',          'verb' => 'POST'],
+        ['name' => 'deck#open',    'url' => '/api/v1/decks/open',          'verb' => 'GET'],
         ['name' => 'deck#save',    'url' => '/api/v1/decks/save',          'verb' => 'POST'],
         ['name' => 'deck#close',   'url' => '/api/v1/decks/close',         'verb' => 'POST'],
         ['name' => 'deck#create',  'url' => '/api/v1/decks',               'verb' => 'POST'],

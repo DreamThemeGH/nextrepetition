@@ -111,6 +111,16 @@
         "Save": "Sačuvaj",
         "Delete": "Obriši",
         "Reverse direction": "Obrni smer",
-        "Read aloud": "Pročitaj naglas"
+        "Read aloud": "Pročitaj naglas",
+        "Failed to start study session": "Neuspelo pokretanje sesije učenja",
+        "Failed to load settings, using defaults": "Neuspelo učitavanje podešavanja, koriste se podrazumevana",
+        "Settings saved": "Podešavanja sačuvana",
+        "Failed to save settings": "Neuspelo čuvanje podešavanja",
+        "Failed to load statistics": "Neuspelo učitavanje statistike",
+        "Failed to load deck statistics": "Neuspelo učitavanje statistike špila",
+        "Deck \"{name}\" created": "Špil \"{name}\" kreiran",
+        "Failed to create deck": "Neuspelo kreiranje špila",
+        "Deck deleted": "Špil obrisan",
+        "Failed to delete deck": "Neuspelo brisanje špila"
     }
 }

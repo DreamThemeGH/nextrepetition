@@ -111,6 +111,16 @@
         "Save": "Save",
         "Delete": "Delete",
         "Reverse direction": "Reverse direction",
-        "Read aloud": "Read aloud"
+        "Read aloud": "Read aloud",
+        "Failed to start study session": "Failed to start study session",
+        "Failed to load settings, using defaults": "Failed to load settings, using defaults",
+        "Settings saved": "Settings saved",
+        "Failed to save settings": "Failed to save settings",
+        "Failed to load statistics": "Failed to load statistics",
+        "Failed to load deck statistics": "Failed to load deck statistics",
+        "Deck \"{name}\" created": "Deck \"{name}\" created",
+        "Failed to create deck": "Failed to create deck",
+        "Deck deleted": "Deck deleted",
+        "Failed to delete deck": "Failed to delete deck"
     }
 }

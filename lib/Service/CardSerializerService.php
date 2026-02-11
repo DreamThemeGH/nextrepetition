@@ -256,6 +256,26 @@ class CardSerializerService {
             if (isset($newData['sentence'])) {
                 $lines[$lineNum] = $newData['sentence'];
             }
+            // Update translation line (line after sentence, if it exists and is not SR/card/empty)
+            if (isset($newData['translation'])) {
+                $translationLine = $lineNum + 1;
+                if ($translationLine < count($lines)) {
+                    $nextTrimmed = trim($lines[$translationLine]);
+                    $isCard = str_contains($nextTrimmed, ':::') || preg_match('/==.+==/', $nextTrimmed);
+                    $isSR = preg_match(self::SR_REGEX, $nextTrimmed);
+
+                    if (!empty($card['translation']) && !$isCard && !$isSR && $nextTrimmed !== '') {
+                        // Replace existing translation line
+                        $lines[$translationLine] = $newData['translation'];
+                    } elseif (!empty($newData['translation'])) {
+                        // Insert new translation line after sentence
+                        array_splice($lines, $translationLine, 0, [$newData['translation']]);
+                    }
+                } elseif (!empty($newData['translation'])) {
+                    // Append translation at end of file
+                    $lines[] = $newData['translation'];
+                }
+            }
         }
 
         return implode("\n", $lines);

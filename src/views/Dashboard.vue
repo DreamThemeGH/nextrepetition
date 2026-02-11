@@ -122,8 +122,11 @@ onMounted(async () => {
     border-radius: 12px;
     padding: 20px 16px;
     text-align: center;
-    cursor: pointer;
     transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.summary-due {
+    cursor: pointer;
 
     &:hover {
         transform: translateY(-2px);

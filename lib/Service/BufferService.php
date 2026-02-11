@@ -26,7 +26,7 @@ use Psr\Log\LoggerInterface;
 class BufferService {
 
     private const CACHE_PREFIX = 'flashcards_buffer_';
-    private const CACHE_TTL = 3600; // 1 hour max
+    private const CACHE_TTL = 86400; // 24 hours
 
     private ICache $cache;
 

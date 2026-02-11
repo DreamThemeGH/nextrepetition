@@ -7,6 +7,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { showError, showSuccess } from '@nextcloud/dialogs'
+import { translate as t } from '@nextcloud/l10n'
 import type { DeckMeta, FolderInfo } from '@/types/deck'
 import type { ParsedCard } from '@/types/card'
 import * as api from '@/services/api'
@@ -101,11 +102,11 @@ export const useDeckStore = defineStore('deck', () => {
     async function createDeck(name: string, folder?: string) {
         try {
             const result = await api.createDeck(name, folder)
-            showSuccess(`Deck "${name}" created`)
+            showSuccess(t('flashcards', 'Deck "{name}" created', { name }))
             await loadDecks()
             return result
         } catch (e) {
-            showError(e instanceof Error ? e.message : 'Failed to create deck')
+            showError(e instanceof Error ? e.message : t('flashcards', 'Failed to create deck'))
             throw e
         }
     }
@@ -113,14 +114,14 @@ export const useDeckStore = defineStore('deck', () => {
     async function deleteDeck(path: string) {
         try {
             await api.deleteDeck(path)
-            showSuccess('Deck deleted')
+            showSuccess(t('flashcards', 'Deck deleted'))
             if (currentPath.value === path) {
                 currentPath.value = null
                 currentCards.value = []
             }
             await loadDecks()
         } catch (e) {
-            showError(e instanceof Error ? e.message : 'Failed to delete deck')
+            showError(e instanceof Error ? e.message : t('flashcards', 'Failed to delete deck'))
             throw e
         }
     }

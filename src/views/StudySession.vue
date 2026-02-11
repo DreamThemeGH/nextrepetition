@@ -217,26 +217,40 @@ function isCloze(card: ParsedCard): card is ClozeCard {
 }
 
 function renderCloze(card: ClozeCard, showAnswer: boolean): string {
-    // Escape the full sentence first to prevent XSS
-    let html = escapeHtml(card.sentence)
-    for (const c of card.clozes) {
-        const escaped = escapeHtml(c.word)
-        // The pattern in the escaped sentence uses &amp; &lt; &gt; etc.
-        const escapedPattern = escapeHtml(`==${c.word}==${c.hint ? `^[${c.hint}]` : ''}`)
-        if (showAnswer) {
-            html = html.replace(
-                escapedPattern,
-                `<span class="cloze-revealed">${escaped}</span>`,
-            )
-        } else {
-            const hint = c.hint ? `<span class="cloze-hint">${escapeHtml(c.hint)}</span>` : '...'
-            html = html.replace(
-                escapedPattern,
-                `<span class="cloze-blank">[${hint}]</span>`,
-            )
+    // Build HTML from the clozes array — no need to re-parse the sentence
+    // Split the raw sentence around cloze patterns, escape non-cloze parts
+    const clozePattern = /==([^=]+)==(?:\^\[([^\]]*)\])?/g
+    const parts: string[] = []
+    let lastIndex = 0
+    let clozeIdx = 0
+    let match: RegExpExecArray | null
+
+    while ((match = clozePattern.exec(card.sentence)) !== null) {
+        // Text before this cloze — escape it
+        if (match.index > lastIndex) {
+            parts.push(escapeHtml(card.sentence.slice(lastIndex, match.index)))
         }
+
+        const cloze = card.clozes[clozeIdx] ?? { word: match[1], hint: match[2] || '' }
+        if (showAnswer) {
+            parts.push(`<span class="cloze-revealed">${escapeHtml(cloze.word)}</span>`)
+        } else {
+            const hint = cloze.hint
+                ? `<span class="cloze-hint">${escapeHtml(cloze.hint)}</span>`
+                : '...'
+            parts.push(`<span class="cloze-blank">[${hint}]</span>`)
+        }
+
+        lastIndex = match.index + match[0].length
+        clozeIdx++
     }
-    return html
+
+    // Remaining text after last cloze
+    if (lastIndex < card.sentence.length) {
+        parts.push(escapeHtml(card.sentence.slice(lastIndex)))
+    }
+
+    return parts.join('')
 }
 
 function escapeHtml(text: string): string {
@@ -279,11 +293,8 @@ async function restartSession() {
     await studyStore.startSession(props.path)
 }
 
-// Keyboard shortcuts
+// Keyboard shortcuts (space is handled in template to avoid duplication)
 useKeyboard([
-    { key: ' ', handler: () => {
-        if (!studyStore.isFlipped) studyStore.flipCard()
-    }},
     { key: '1', handler: () => { if (studyStore.isFlipped) submitRating(0) } },
     { key: '2', handler: () => { if (studyStore.isFlipped) submitRating(1) } },
     { key: '3', handler: () => { if (studyStore.isFlipped) submitRating(2) } },

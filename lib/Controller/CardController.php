@@ -41,10 +41,16 @@ class CardController extends OCSController {
 
         $cards = $this->bufferService->getCards($this->userId, $path);
         if ($cards === null) {
-            return new DataResponse(
-                ['error' => 'Deck not open. Open it first.'],
-                Http::STATUS_NOT_FOUND,
-            );
+            // Auto-open the deck if buffer is cold
+            try {
+                $parseResult = $this->bufferService->openDeck($this->userId, $path);
+                $cards = $parseResult['cards'] ?? [];
+            } catch (\Exception $e) {
+                return new DataResponse(
+                    ['error' => $e->getMessage()],
+                    Http::STATUS_INTERNAL_SERVER_ERROR,
+                );
+            }
         }
 
         return new DataResponse($cards);

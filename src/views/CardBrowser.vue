@@ -174,7 +174,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { translate as t } from '@nextcloud/l10n'
 import { showError, showSuccess } from '@nextcloud/dialogs'
@@ -378,6 +378,13 @@ onMounted(async () => {
         cards.value = []
     } finally {
         loading.value = false
+    }
+})
+
+// Keep cards in sync with store changes (e.g. after auto-save re-parse)
+watch(() => deckStore.currentCards, (newCards) => {
+    if (newCards.length > 0) {
+        cards.value = newCards
     }
 })
 

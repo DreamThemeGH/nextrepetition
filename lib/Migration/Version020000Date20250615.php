@@ -32,7 +32,7 @@ class Version020000Date20250615 extends SimpleMigrationStep {
                 'length' => 64,
             ]);
 
-            $table->addColumn('settings', Types::TEXT, [
+            $table->addColumn('global_settings', Types::TEXT, [
                 'notnull' => true,
                 'default' => '{}',
             ]);

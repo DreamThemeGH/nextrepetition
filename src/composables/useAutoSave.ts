@@ -51,10 +51,23 @@ export function useAutoSave() {
         }
     }
 
-    onMounted(start)
+    function handleBeforeUnload() {
+        if (deckStore.dirty && deckStore.currentPath) {
+            // Use sendBeacon for reliable save on page unload
+            const url = deckStore.currentPath
+            // Fire and forget — best-effort save
+            flush()
+        }
+    }
+
+    onMounted(() => {
+        start()
+        window.addEventListener('beforeunload', handleBeforeUnload)
+    })
     onUnmounted(() => {
         stop()
-        // Flush any unsaved changes before unmounting
+        window.removeEventListener('beforeunload', handleBeforeUnload)
+        // Best-effort flush (may not complete if component is being destroyed)
         flush()
     })
 

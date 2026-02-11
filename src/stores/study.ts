@@ -7,6 +7,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { showError } from '@nextcloud/dialogs'
+import { translate as t } from '@nextcloud/l10n'
 import type { ParsedCard } from '@/types/card'
 import type { Rating, IntervalPrediction } from '@/types/sr'
 import * as api from '@/services/api'
@@ -61,7 +62,7 @@ export const useStudyStore = defineStore('study', () => {
                 await loadPredictions()
             }
         } catch (e) {
-            showError(e instanceof Error ? e.message : 'Failed to start study session')
+            showError(e instanceof Error ? e.message : t('flashcards', 'Failed to start study session'))
             throw e
         } finally {
             loading.value = false
@@ -111,6 +112,8 @@ export const useStudyStore = defineStore('study', () => {
                 sessionStats.value.correct++
             } else {
                 sessionStats.value.again++
+                // Re-queue "Again" cards at the end with updated SR data
+                queue.value.push(updatedCard)
             }
 
             // Move to next card

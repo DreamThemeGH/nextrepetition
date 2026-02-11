@@ -7,6 +7,7 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { showError, showSuccess } from '@nextcloud/dialogs'
+import { translate as t } from '@nextcloud/l10n'
 import type { UserSettings } from '@/types/sr'
 import * as api from '@/services/api'
 
@@ -38,7 +39,7 @@ export const useSettingsStore = defineStore('settings', () => {
             settings.value = await api.fetchSettings()
             loaded.value = true
         } catch (e) {
-            showError('Failed to load settings, using defaults')
+            showError(t('flashcards', 'Failed to load settings, using defaults'))
             settings.value = { ...DEFAULT_SETTINGS }
         } finally {
             loading.value = false
@@ -49,9 +50,9 @@ export const useSettingsStore = defineStore('settings', () => {
         loading.value = true
         try {
             settings.value = await api.updateSettings(updates)
-            showSuccess('Settings saved')
+            showSuccess(t('flashcards', 'Settings saved'))
         } catch (e) {
-            showError(e instanceof Error ? e.message : 'Failed to save settings')
+            showError(e instanceof Error ? e.message : t('flashcards', 'Failed to save settings'))
         } finally {
             loading.value = false
         }

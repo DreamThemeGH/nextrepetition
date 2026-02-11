@@ -111,6 +111,16 @@
         "Save": "Сохранить",
         "Delete": "Удалить",
         "Reverse direction": "Обратное направление",
-        "Read aloud": "Прочитать вслух"
+        "Read aloud": "Прочитать вслух",
+        "Failed to start study session": "Не удалось начать сессию изучения",
+        "Failed to load settings, using defaults": "Не удалось загрузить настройки, используются значения по умолчанию",
+        "Settings saved": "Настройки сохранены",
+        "Failed to save settings": "Не удалось сохранить настройки",
+        "Failed to load statistics": "Не удалось загрузить статистику",
+        "Failed to load deck statistics": "Не удалось загрузить статистику колоды",
+        "Deck \"{name}\" created": "Колода \"{name}\" создана",
+        "Failed to create deck": "Не удалось создать колоду",
+        "Deck deleted": "Колода удалена",
+        "Failed to delete deck": "Не удалось удалить колоду"
     }
 }
