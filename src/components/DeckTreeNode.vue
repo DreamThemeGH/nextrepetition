@@ -175,16 +175,18 @@ function countDue(node: TreeNode): number {
 }
 
 .stat-total {
-    color: var(--color-text-maxcontrast);
+    color: #e0e0e0;
+    font-weight: 500;
 }
 
 .stat-due {
-    color: var(--color-warning);
+    color: #ff9800;
     font-weight: 600;
 }
 
 .stat-new {
-    color: var(--color-info);
+    color: #4fc3f7;
+    font-weight: 600;
 }
 
 .deck-actions {
