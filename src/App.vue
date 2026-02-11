@@ -16,11 +16,6 @@
                     <template #icon>
                         <IconCards :size="20" />
                     </template>
-                    <template #counter>
-                        <NcCounterBubble v-if="dueCount > 0" type="highlighted">
-                            {{ dueCount }}
-                        </NcCounterBubble>
-                    </template>
                 </NcAppNavigationItem>
 
                 <NcAppNavigationItem :name="t('flashcards', 'Statistics')"

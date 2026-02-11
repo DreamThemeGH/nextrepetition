@@ -194,7 +194,8 @@ onMounted(async () => {
 }
 
 .stat-card {
-    background: var(--color-background-dark);
+    background: rgba(50, 50, 50, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 12px;
     padding: 20px;
     text-align: center;
@@ -203,6 +204,7 @@ onMounted(async () => {
 .stat-number {
     font-size: 2em;
     font-weight: 700;
+    color: #ffffff;
 
     &.reviewed { color: $flashcards-success; }
     &.due { color: $flashcards-warning; }
@@ -210,19 +212,23 @@ onMounted(async () => {
 }
 
 .stat-label {
-    color: var(--color-text-maxcontrast);
+    color: #cccccc;
     margin-top: 4px;
 }
 
 .chart-section {
     margin-bottom: 32px;
 
-    h3 { margin-bottom: 12px; }
+    h3 { 
+        margin-bottom: 12px;
+        color: #ffffff;
+    }
 }
 
 .chart-container {
     height: 280px;
-    background: var(--color-background-dark);
+    background: rgba(50, 50, 50, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 12px;
     padding: 20px;
 
@@ -233,27 +239,38 @@ onMounted(async () => {
 }
 
 .deck-stats-table {
-    h3 { margin-bottom: 12px; }
+    h3 { 
+        margin-bottom: 12px;
+        color: #ffffff;
+    }
 
     table {
         width: 100%;
         border-collapse: collapse;
+        background: rgba(50, 50, 50, 0.3);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 8px;
     }
 
     th, td {
         padding: 10px 16px;
         text-align: left;
-        border-bottom: 1px solid var(--color-border);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     }
 
     th {
         font-weight: 700;
-        color: var(--color-text-maxcontrast);
+        color: #cccccc;
+        background: rgba(255, 255, 255, 0.05);
+    }
+
+    td {
+        color: #e0e0e0;
     }
 
     .deck-stat-row {
         cursor: pointer;
-        &:hover { background: var(--color-background-hover); }
+        &:hover { background: rgba(255, 255, 255, 0.08); }
     }
 
     .td-due { color: $flashcards-warning; font-weight: 600; }
