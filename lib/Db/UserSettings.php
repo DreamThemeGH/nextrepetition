@@ -17,8 +17,8 @@ use OCP\AppFramework\Db\Entity;
 /**
  * @method string getUserId()
  * @method void setUserId(string $userId)
- * @method string getSettings()
- * @method void setSettings(string $settings)
+ * @method string getGlobalSettings()
+ * @method void setGlobalSettings(string $globalSettings)
  * @method int getCreatedAt()
  * @method void setCreatedAt(int $createdAt)
  * @method int getUpdatedAt()
@@ -27,7 +27,7 @@ use OCP\AppFramework\Db\Entity;
 class UserSettings extends Entity {
 
     protected string $userId = '';
-    protected string $settings = '{}';
+    protected string $globalSettings = '{}';
     protected int $createdAt = 0;
     protected int $updatedAt = 0;
 
@@ -50,7 +50,7 @@ class UserSettings extends Entity {
 
     public function __construct() {
         $this->addType('userId', 'string');
-        $this->addType('settings', 'string');
+        $this->addType('globalSettings', 'string');
         $this->addType('createdAt', 'integer');
         $this->addType('updatedAt', 'integer');
     }
@@ -59,7 +59,7 @@ class UserSettings extends Entity {
      * Get parsed settings with defaults filled in.
      */
     public function getParsedSettings(): array {
-        $stored = json_decode($this->settings, true) ?: [];
+        $stored = json_decode($this->globalSettings, true) ?: [];
         return array_merge(self::DEFAULTS, $stored);
     }
 
@@ -71,7 +71,7 @@ class UserSettings extends Entity {
         $merged = array_merge($current, $newSettings);
         // Only keep keys that exist in DEFAULTS
         $filtered = array_intersect_key($merged, self::DEFAULTS);
-        $this->setSettings(json_encode($filtered, JSON_UNESCAPED_UNICODE));
+        $this->setGlobalSettings(json_encode($filtered, JSON_UNESCAPED_UNICODE));
         $this->setUpdatedAt(time());
     }
 

@@ -23,8 +23,34 @@ class UserSettingsMapper extends QBMapper {
         parent::__construct($db, 'flashcards_user_settings', UserSettings::class);
     }
 
-    /**
-     * Get settings for a user, or create with defaults.
+    /**     * Override to handle v1 schema with global_settings column.
+     */
+    protected function mapRowToEntity(array $row): UserSettings {
+        $entity = new UserSettings();
+        
+        // Map v1 columns: global_settings -> globalSettings
+        if (isset($row['user_id'])) {
+            $entity->setUserId($row['user_id']);
+        }
+        if (isset($row['global_settings'])) {
+            $entity->setGlobalSettings($row['global_settings'] ?? '{}');
+        }
+        if (isset($row['created_at'])) {
+            // Convert timestamp string to unix timestamp
+            $entity->setCreatedAt(is_numeric($row['created_at']) 
+                ? (int)$row['created_at'] 
+                : strtotime($row['created_at']));
+        }
+        if (isset($row['updated_at'])) {
+            $entity->setUpdatedAt(is_numeric($row['updated_at']) 
+                ? (int)$row['updated_at'] 
+                : strtotime($row['updated_at']));
+        }
+        
+        return $entity;
+    }
+
+    /**     * Get settings for a user, or create with defaults.
      */
     public function getOrCreate(string $userId): UserSettings {
         try {
