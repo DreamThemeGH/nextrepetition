@@ -25,11 +25,11 @@ export const useDeckStore = defineStore('deck', () => {
     const dirty = ref(false)
 
     const totalDue = computed(() =>
-        decks.value.reduce((sum, d) => sum + (d.dueCards || 0), 0),
+        decks.value.reduce((sum, d) => sum + (Number(d.dueCards) || 0), 0),
     )
 
     const totalNew = computed(() =>
-        decks.value.reduce((sum, d) => sum + (d.newCards || 0), 0),
+        decks.value.reduce((sum, d) => sum + (Number(d.newCards) || 0), 0),
     )
 
     const currentDeck = computed(() =>

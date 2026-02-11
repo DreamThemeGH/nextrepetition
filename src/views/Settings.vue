@@ -75,22 +75,22 @@
                 </div>
 
                 <div class="setting-row">
-                    <NcCheckboxRadioSwitch :checked="localSettings.showProgress"
-                        @update:checked="v => { localSettings.showProgress = v; markDirty() }">
+                    <NcCheckboxRadioSwitch :model-value="localSettings.showProgress"
+                        @update:model-value="v => { localSettings.showProgress = v; markDirty() }">
                         {{ t('flashcards', 'Show progress bar') }}
                     </NcCheckboxRadioSwitch>
                 </div>
 
                 <div class="setting-row">
-                    <NcCheckboxRadioSwitch :checked="localSettings.keyboardShortcuts"
-                        @update:checked="v => { localSettings.keyboardShortcuts = v; markDirty() }">
+                    <NcCheckboxRadioSwitch :model-value="localSettings.keyboardShortcuts"
+                        @update:model-value="v => { localSettings.keyboardShortcuts = v; markDirty() }">
                         {{ t('flashcards', 'Enable keyboard shortcuts') }}
                     </NcCheckboxRadioSwitch>
                 </div>
 
                 <div class="setting-row">
-                    <NcCheckboxRadioSwitch :checked="localSettings.fullscreenMode"
-                        @update:checked="v => { localSettings.fullscreenMode = v; markDirty() }">
+                    <NcCheckboxRadioSwitch :model-value="localSettings.fullscreenMode"
+                        @update:model-value="v => { localSettings.fullscreenMode = v; markDirty() }">
                         {{ t('flashcards', 'Fullscreen study mode') }}
                     </NcCheckboxRadioSwitch>
                 </div>
@@ -101,8 +101,8 @@
                 <h3>{{ t('flashcards', 'Text-to-Speech') }}</h3>
 
                 <div class="setting-row">
-                    <NcCheckboxRadioSwitch :checked="localSettings.autoPlayAudio"
-                        @update:checked="v => { localSettings.autoPlayAudio = v; markDirty() }">
+                    <NcCheckboxRadioSwitch :model-value="localSettings.autoPlayAudio"
+                        @update:model-value="v => { localSettings.autoPlayAudio = v; markDirty() }">
                         {{ t('flashcards', 'Auto-play audio for cards') }}
                     </NcCheckboxRadioSwitch>
                 </div>

@@ -13,14 +13,13 @@ export interface ReviewAnswer {
     srIndex?: number
 }
 
-export type Rating = 0 | 1 | 2 | 3 | 4
+export type Rating = 0 | 1 | 2 | 3
 
 export const RATING_LABELS: Record<Rating, string> = {
     0: 'Again',
     1: 'Hard',
     2: 'Good',
     3: 'Easy',
-    4: 'Perfect',
 }
 
 export const RATING_COLORS: Record<Rating, string> = {
@@ -28,7 +27,6 @@ export const RATING_COLORS: Record<Rating, string> = {
     1: 'var(--flashcards-rating-hard, #e67700)',
     2: 'var(--flashcards-rating-good, #2d8c3c)',
     3: 'var(--flashcards-rating-easy, #1971c2)',
-    4: 'var(--flashcards-rating-perfect, #6741d9)',
 }
 
 export interface ReviewResult {

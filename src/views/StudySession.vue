@@ -150,19 +150,32 @@
             </div>
 
             <!-- Rating buttons (shown after flip) -->
-            <div v-if="studyStore.isFlipped" class="rating-buttons">
-                <button v-for="rating in ratings"
-                    :key="rating.value"
-                    class="rating-btn"
-                    :style="{ '--rating-color': rating.color }"
-                    :aria-label="rating.label + (studyStore.predictions[rating.value] ? ' — ' + studyStore.predictions[rating.value].label : '')"
-                    @click="submitRating(rating.value)"
+            <div v-if="studyStore.isFlipped" class="rating-container">
+                <!-- Again button (separate, skips card) -->
+                <button class="rating-btn rating-again"
+                    :style="{ '--rating-color': againRating.color }"
+                    :aria-label="againRating.label"
+                    @click="submitRating(againRating.value)"
                     :disabled="studyStore.loading">
-                    <span class="rating-label">{{ rating.label }}</span>
-                    <span class="rating-interval" v-if="studyStore.predictions[rating.value]">
-                        {{ studyStore.predictions[rating.value].label }}
-                    </span>
+                    <span class="rating-label">{{ againRating.label }}</span>
+                    <span class="rating-hint">{{ t('flashcards', 'Skip without changes') }}</span>
                 </button>
+
+                <!-- Main rating buttons -->
+                <div class="rating-buttons">
+                    <button v-for="rating in ratings"
+                        :key="rating.value"
+                        class="rating-btn"
+                        :style="{ '--rating-color': rating.color }"
+                        :aria-label="rating.label + (studyStore.predictions[rating.value] ? ' — ' + studyStore.predictions[rating.value].label : '')"
+                        @click="submitRating(rating.value)"
+                        :disabled="studyStore.loading">
+                        <span class="rating-label">{{ rating.label }}</span>
+                        <span class="rating-interval" v-if="studyStore.predictions[rating.value]">
+                            {{ studyStore.predictions[rating.value].label }}
+                        </span>
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -201,12 +214,12 @@ const fullscreenMode = computed(() => settingsStore.get('fullscreenMode') === tr
 const buttonPosition = computed(() => settingsStore.get('buttonPosition') || 'bottom')
 
 const ratings = [
-    { value: 0 as Rating, label: t('flashcards', 'Again'), color: RATING_COLORS[0] },
     { value: 1 as Rating, label: t('flashcards', 'Hard'), color: RATING_COLORS[1] },
     { value: 2 as Rating, label: t('flashcards', 'Good'), color: RATING_COLORS[2] },
     { value: 3 as Rating, label: t('flashcards', 'Easy'), color: RATING_COLORS[3] },
-    { value: 4 as Rating, label: t('flashcards', 'Perfect'), color: RATING_COLORS[4] },
 ]
+
+const againRating = { value: 0 as Rating, label: t('flashcards', 'Again'), color: RATING_COLORS[0] }
 
 function isBasic(card: ParsedCard): card is BasicCard {
     return isBasicCard(card)
@@ -294,12 +307,12 @@ async function restartSession() {
 }
 
 // Keyboard shortcuts (space is handled in template to avoid duplication)
+// 1=Again, 2=Hard, 3=Good, 4=Easy
 useKeyboard([
     { key: '1', handler: () => { if (studyStore.isFlipped) submitRating(0) } },
     { key: '2', handler: () => { if (studyStore.isFlipped) submitRating(1) } },
     { key: '3', handler: () => { if (studyStore.isFlipped) submitRating(2) } },
     { key: '4', handler: () => { if (studyStore.isFlipped) submitRating(3) } },
-    { key: '5', handler: () => { if (studyStore.isFlipped) submitRating(4) } },
     { key: 'r', handler: () => speakCard() },
 ])
 
@@ -519,10 +532,31 @@ onUnmounted(() => {
     margin-bottom: 12px;
 }
 
+.rating-container {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+    align-items: center;
+}
+
+.rating-again {
+    width: 100%;
+    max-width: 600px;
+    opacity: 0.85;
+
+    .rating-hint {
+        font-size: 0.75em;
+        color: var(--color-text-maxcontrast);
+        font-weight: 400;
+    }
+}
+
 .rating-buttons {
     display: flex;
     gap: 8px;
     width: 100%;
+    max-width: 600px;
     justify-content: center;
     flex-wrap: wrap;
 }

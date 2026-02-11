@@ -6,6 +6,7 @@
  * Fetches folder tree from Nextcloud Files via WebDAV PROPFIND.
  */
 
+import axios from '@nextcloud/axios'
 import { generateRemoteUrl } from '@nextcloud/router'
 import { getCurrentUser } from '@nextcloud/auth'
 
@@ -24,27 +25,49 @@ function parseWebDavResponse(xml: string, basePath: string): FolderNode[] {
     const doc = parser.parseFromString(xml, 'application/xml')
     const responses = doc.querySelectorAll('response')
     const folders: FolderNode[] = []
+    const uid = getCurrentUser()?.uid || ''
 
     responses.forEach((resp) => {
         const href = resp.querySelector('href')?.textContent || ''
-        const isCollection = resp.querySelector('resourcetype collection') !== null
+
+        // Check if this is a collection (folder)
+        const resourcetype = resp.querySelector('resourcetype')
+        if (!resourcetype) return
+        // querySelectorAll doesn't work well with namespaced elements, check innerHTML
+        const isCollection = resourcetype.innerHTML.toLowerCase().includes('collection')
+            || resourcetype.querySelector('collection') !== null
+            || resp.querySelector('resourcetype > *') !== null
 
         if (!isCollection) return
 
         // Extract path relative to user's files root
         const decodedHref = decodeURIComponent(href)
-        const userFilesPrefix = `/remote.php/dav/files/${getCurrentUser()?.uid}/`
-        let relativePath = decodedHref
-        const idx = decodedHref.indexOf(userFilesPrefix)
-        if (idx >= 0) {
-            relativePath = '/' + decodedHref.substring(idx + userFilesPrefix.length)
+
+        // Try multiple patterns to find the user files prefix
+        const prefixes = [
+            `/remote.php/dav/files/${uid}/`,
+            `/remote.php/webdav/`,
+        ]
+
+        let relativePath = ''
+        for (const prefix of prefixes) {
+            const idx = decodedHref.indexOf(prefix)
+            if (idx >= 0) {
+                relativePath = '/' + decodedHref.substring(idx + prefix.length)
+                break
+            }
         }
+
+        if (!relativePath) return
 
         // Remove trailing slash
         relativePath = relativePath.replace(/\/+$/, '') || '/'
 
+        // Normalize basePath
+        const normalizedBase = basePath.replace(/\/+$/, '') || '/'
+
         // Skip the queried folder itself
-        if (relativePath === basePath || relativePath === basePath.replace(/\/+$/, '')) {
+        if (relativePath === normalizedBase) {
             return
         }
 
@@ -66,31 +89,39 @@ function parseWebDavResponse(xml: string, basePath: string): FolderNode[] {
  */
 export async function listFolders(path: string = '/'): Promise<FolderNode[]> {
     const user = getCurrentUser()
-    if (!user?.uid) throw new Error('Not authenticated')
+    if (!user?.uid) {
+        console.warn('[flashcards] WebDAV: user not authenticated')
+        return []
+    }
 
     const davUrl = generateRemoteUrl(`dav/files/${user.uid}${path}`)
 
-    const response = await fetch(davUrl, {
-        method: 'PROPFIND',
-        headers: {
-            'Depth': '1',
-            'Content-Type': 'application/xml',
-        },
-        body: `<?xml version="1.0" encoding="utf-8" ?>
+    try {
+        const response = await axios({
+            method: 'PROPFIND',
+            url: davUrl,
+            headers: {
+                'Depth': '1',
+                'Content-Type': 'application/xml; charset=utf-8',
+            },
+            data: `<?xml version="1.0" encoding="utf-8" ?>
 <d:propfind xmlns:d="DAV:">
   <d:prop>
     <d:resourcetype />
     <d:displayname />
   </d:prop>
 </d:propfind>`,
-    })
+        })
 
-    if (!response.ok) {
-        throw new Error(`WebDAV PROPFIND failed: ${response.status}`)
+        const xml = typeof response.data === 'string'
+            ? response.data
+            : new XMLSerializer().serializeToString(response.data)
+
+        return parseWebDavResponse(xml, path)
+    } catch (e) {
+        console.error('[flashcards] WebDAV PROPFIND error:', e)
+        return []
     }
-
-    const xml = await response.text()
-    return parseWebDavResponse(xml, path)
 }
 
 /**

@@ -24,7 +24,7 @@ A file-based spaced repetition flashcard app for Nextcloud.
 - **Keyboard shortcuts** — Space to reveal, 1-5 to rate
 - **Multilingual** — English, Russian, Serbian
     ]]></description>
-    <version>2.0.0</version>
+    <version>2.0.2</version>
     <licence>agpl</licence>
     <author mail="flashcards@nextcloud.local" homepage="https://github.com/nextcloud-flashcards">Nextcloud Flashcards</author>
     <namespace>Flashcards</namespace>

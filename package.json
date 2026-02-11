@@ -1,6 +1,6 @@
 {
     "name": "nextcloud-flashcards",
-    "version": "2.0.0",
+    "version": "2.0.2",
     "description": "Nextcloud Flashcards v2 — File-based spaced repetition for language learning",
     "private": true,
     "type": "module",

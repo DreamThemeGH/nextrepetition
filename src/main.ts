@@ -14,7 +14,7 @@ declare global {
     interface Window { appName: string; appVersion: string }
 }
 window.appName = 'flashcards'
-window.appVersion = '2.0.0'
+window.appVersion = '2.0.2'
 
 const app = createApp(App)
 app.use(createPinia())

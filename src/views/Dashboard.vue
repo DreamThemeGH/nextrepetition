@@ -18,35 +18,45 @@
                     @click="goToDecks"
                     @keydown.enter="goToDecks"
                     @keydown.space.prevent="goToDecks">
-                    <div class="summary-icon" aria-hidden="true">📚</div>
+                    <div class="summary-icon" aria-hidden="true">
+                        <IconCards :size="32" />
+                    </div>
                     <div class="summary-number">{{ stats?.totalDue ?? 0 }}</div>
                     <div class="summary-label">{{ t('flashcards', 'Cards due today') }}</div>
                 </div>
                 <div class="summary-card summary-new"
                     role="status"
                     :aria-label="t('flashcards', 'New cards') + ': ' + (stats?.totalNew ?? 0)">
-                    <div class="summary-icon" aria-hidden="true">✨</div>
+                    <div class="summary-icon" aria-hidden="true">
+                        <IconStar :size="32" />
+                    </div>
                     <div class="summary-number">{{ stats?.totalNew ?? 0 }}</div>
                     <div class="summary-label">{{ t('flashcards', 'New cards') }}</div>
                 </div>
                 <div class="summary-card summary-total"
                     role="status"
                     :aria-label="t('flashcards', 'Total cards') + ': ' + (stats?.totalCards ?? 0)">
-                    <div class="summary-icon" aria-hidden="true">🗂️</div>
+                    <div class="summary-icon" aria-hidden="true">
+                        <IconFolder :size="32" />
+                    </div>
                     <div class="summary-number">{{ stats?.totalCards ?? 0 }}</div>
                     <div class="summary-label">{{ t('flashcards', 'Total cards') }}</div>
                 </div>
                 <div class="summary-card summary-decks"
                     role="status"
                     :aria-label="t('flashcards', 'Decks') + ': ' + (stats?.totalDecks ?? 0)">
-                    <div class="summary-icon" aria-hidden="true">📂</div>
+                    <div class="summary-icon" aria-hidden="true">
+                        <IconFolderOpen :size="32" />
+                    </div>
                     <div class="summary-number">{{ stats?.totalDecks ?? 0 }}</div>
                     <div class="summary-label">{{ t('flashcards', 'Decks') }}</div>
                 </div>
                 <div class="summary-card summary-reviewed"
                     role="status"
                     :aria-label="t('flashcards', 'Reviewed') + ': ' + (stats?.totalReviewed ?? 0)">
-                    <div class="summary-icon" aria-hidden="true">✅</div>
+                    <div class="summary-icon" aria-hidden="true">
+                        <IconCheck :size="32" />
+                    </div>
                     <div class="summary-number">{{ stats?.totalReviewed ?? 0 }}</div>
                     <div class="summary-label">{{ t('flashcards', 'Reviewed') }}</div>
                 </div>
@@ -76,6 +86,11 @@ import { useRouter } from 'vue-router'
 import { translate as t } from '@nextcloud/l10n'
 import NcLoadingIcon from '@nextcloud/vue/components/NcLoadingIcon'
 import NcButton from '@nextcloud/vue/components/NcButton'
+import IconCards from 'vue-material-design-icons/Cards.vue'
+import IconStar from 'vue-material-design-icons/Star.vue'
+import IconFolder from 'vue-material-design-icons/Folder.vue'
+import IconFolderOpen from 'vue-material-design-icons/FolderOpen.vue'
+import IconCheck from 'vue-material-design-icons/CheckCircle.vue'
 import { useStatsStore } from '@/stores/stats'
 
 const router = useRouter()
@@ -151,11 +166,11 @@ onMounted(async () => {
     margin-top: 4px;
 }
 
-.summary-due .summary-number { color: var(--color-warning); }
-.summary-new .summary-number { color: var(--color-info); }
-.summary-total .summary-number { color: var(--color-text-light); }
-.summary-decks .summary-number { color: var(--color-primary); }
-.summary-reviewed .summary-number { color: var(--color-success); }
+.summary-due .summary-number { color: #ff922b; }
+.summary-new .summary-number { color: #74c0fc; }
+.summary-total .summary-number { color: #e9ecef; }
+.summary-decks .summary-number { color: #ffd43b; }
+.summary-reviewed .summary-number { color: #69db7c; }
 
 .quick-actions {
     display: flex;

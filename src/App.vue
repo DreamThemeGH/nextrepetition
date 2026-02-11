@@ -18,7 +18,7 @@
                     </template>
                     <template #counter>
                         <NcCounterBubble v-if="dueCount > 0" type="highlighted">
-                            {{ dueCount }}
+                            {{ String(dueCount) }}
                         </NcCounterBubble>
                     </template>
                 </NcAppNavigationItem>
@@ -72,8 +72,11 @@ const deckStore = useDeckStore()
 const settingsStore = useSettingsStore()
 const dueCount = computed(() => {
     const val = deckStore.totalDue
-    return Number.isFinite(val) ? val : 0
+    if (typeof val !== 'number' || !Number.isFinite(val) || val < 0) return 0
+    return val
 })
+
+console.log('[flashcards] v2.0.2 loaded')
 
 useAutoSave()
 
