@@ -13,14 +13,18 @@
             <div class="settings-section">
                 <h3>{{ t('flashcards', 'File Storage') }}</h3>
 
-                <div class="setting-row">
+                <div class="setting-row folder-setting">
                     <label>{{ t('flashcards', 'Deck folder path') }}</label>
                     <div class="setting-input">
-                        <NcTextField :value="localSettings.deckFolder"
-                            :placeholder="'/ObsidianSync'"
-                            @update:value="v => { localSettings.deckFolder = v; markDirty() }" />
+                        <div class="current-path">
+                            <span class="path-label">{{ t('flashcards', 'Current:') }}</span>
+                            <code>{{ localSettings.deckFolder || '/' }}</code>
+                        </div>
+                        <FolderTreeSelector
+                            :model-value="localSettings.deckFolder"
+                            @update:model-value="v => { localSettings.deckFolder = v; markDirty() }" />
                         <p class="setting-help">
-                            {{ t('flashcards', 'Path to the folder containing your .md flashcard files, relative to your Nextcloud Files root.') }}
+                            {{ t('flashcards', 'Select the folder containing your .md flashcard files from the tree above.') }}
                         </p>
                     </div>
                 </div>
@@ -31,20 +35,20 @@
                 <h3>{{ t('flashcards', 'Study') }}</h3>
 
                 <div class="setting-row">
-                    <label>{{ t('flashcards', 'Cards per session') }}</label>
-                    <input type="number" v-model.number="localSettings.cardsPerDay"
+                    <label for="cards-per-day">{{ t('flashcards', 'Cards per session') }}</label>
+                    <input type="number" id="cards-per-day" v-model.number="localSettings.cardsPerDay"
                         min="1" max="500" @change="markDirty" />
                 </div>
 
                 <div class="setting-row">
-                    <label>{{ t('flashcards', 'New cards per day') }}</label>
-                    <input type="number" v-model.number="localSettings.newCardsPerDay"
+                    <label for="new-cards-per-day">{{ t('flashcards', 'New cards per day') }}</label>
+                    <input type="number" id="new-cards-per-day" v-model.number="localSettings.newCardsPerDay"
                         min="0" max="200" @change="markDirty" />
                 </div>
 
                 <div class="setting-row">
-                    <label>{{ t('flashcards', 'Auto-save interval (seconds)') }}</label>
-                    <input type="number" v-model.number="localSettings.autoSaveInterval"
+                    <label for="auto-save-interval">{{ t('flashcards', 'Auto-save interval (seconds)') }}</label>
+                    <input type="number" id="auto-save-interval" v-model.number="localSettings.autoSaveInterval"
                         min="5" max="120" @change="markDirty" />
                 </div>
             </div>
@@ -54,8 +58,8 @@
                 <h3>{{ t('flashcards', 'Interface') }}</h3>
 
                 <div class="setting-row">
-                    <label>{{ t('flashcards', 'Card layout') }}</label>
-                    <select v-model="localSettings.cardLayout" @change="markDirty">
+                    <label for="card-layout">{{ t('flashcards', 'Card layout') }}</label>
+                    <select id="card-layout" v-model="localSettings.cardLayout" @change="markDirty">
                         <option value="classic">{{ t('flashcards', 'Classic') }}</option>
                         <option value="compact">{{ t('flashcards', 'Compact') }}</option>
                         <option value="minimal">{{ t('flashcards', 'Minimal') }}</option>
@@ -63,8 +67,8 @@
                 </div>
 
                 <div class="setting-row">
-                    <label>{{ t('flashcards', 'Button position') }}</label>
-                    <select v-model="localSettings.buttonPosition" @change="markDirty">
+                    <label for="button-position">{{ t('flashcards', 'Button position') }}</label>
+                    <select id="button-position" v-model="localSettings.buttonPosition" @change="markDirty">
                         <option value="bottom">{{ t('flashcards', 'Bottom') }}</option>
                         <option value="right">{{ t('flashcards', 'Right side') }}</option>
                     </select>
@@ -142,6 +146,7 @@ import NcCheckboxRadioSwitch from '@nextcloud/vue/components/NcCheckboxRadioSwit
 import NcLoadingIcon from '@nextcloud/vue/components/NcLoadingIcon'
 import NcTextField from '@nextcloud/vue/components/NcTextField'
 
+import FolderTreeSelector from '@/components/FolderTreeSelector.vue'
 import { useSettingsStore } from '@/stores/settings'
 import type { UserSettings } from '@/types/sr'
 
@@ -231,6 +236,39 @@ onMounted(async () => {
 
 .setting-input {
     flex: 1;
+}
+
+.folder-setting {
+    flex-direction: column;
+
+    > label {
+        min-width: auto;
+    }
+
+    .setting-input {
+        width: 100%;
+    }
+}
+
+.current-path {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+    padding: 6px 12px;
+    background: var(--color-background-dark);
+    border-radius: 6px;
+    font-size: 0.9em;
+
+    .path-label {
+        font-weight: 600;
+        color: var(--color-text-maxcontrast);
+    }
+
+    code {
+        font-family: monospace;
+        color: var(--color-primary-element);
+    }
 }
 
 .setting-help {

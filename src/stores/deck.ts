@@ -6,6 +6,7 @@
 
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
+import { showError, showSuccess } from '@nextcloud/dialogs'
 import type { DeckMeta, FolderInfo } from '@/types/deck'
 import type { ParsedCard } from '@/types/card'
 import * as api from '@/services/api'
@@ -41,6 +42,7 @@ export const useDeckStore = defineStore('deck', () => {
             decks.value = await api.fetchDecks()
         } catch (e) {
             error.value = e instanceof Error ? e.message : 'Failed to load decks'
+            showError(error.value)
         } finally {
             loading.value = false
         }
@@ -66,6 +68,7 @@ export const useDeckStore = defineStore('deck', () => {
             return result
         } catch (e) {
             error.value = e instanceof Error ? e.message : 'Failed to open deck'
+            showError(error.value)
             throw e
         } finally {
             loading.value = false
@@ -79,6 +82,7 @@ export const useDeckStore = defineStore('deck', () => {
             dirty.value = false
         } catch (e) {
             error.value = e instanceof Error ? e.message : 'Failed to save'
+            showError(error.value)
         }
     }
 
@@ -95,18 +99,30 @@ export const useDeckStore = defineStore('deck', () => {
     }
 
     async function createDeck(name: string, folder?: string) {
-        const result = await api.createDeck(name, folder)
-        await loadDecks()
-        return result
+        try {
+            const result = await api.createDeck(name, folder)
+            showSuccess(`Deck "${name}" created`)
+            await loadDecks()
+            return result
+        } catch (e) {
+            showError(e instanceof Error ? e.message : 'Failed to create deck')
+            throw e
+        }
     }
 
     async function deleteDeck(path: string) {
-        await api.deleteDeck(path)
-        if (currentPath.value === path) {
-            currentPath.value = null
-            currentCards.value = []
+        try {
+            await api.deleteDeck(path)
+            showSuccess('Deck deleted')
+            if (currentPath.value === path) {
+                currentPath.value = null
+                currentCards.value = []
+            }
+            await loadDecks()
+        } catch (e) {
+            showError(e instanceof Error ? e.message : 'Failed to delete deck')
+            throw e
         }
-        await loadDecks()
     }
 
     function updateCardLocally(index: number, card: ParsedCard) {

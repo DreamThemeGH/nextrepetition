@@ -6,6 +6,7 @@
 
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
+import { showError } from '@nextcloud/dialogs'
 import type { ParsedCard } from '@/types/card'
 import type { Rating, IntervalPrediction } from '@/types/sr'
 import * as api from '@/services/api'
@@ -60,6 +61,7 @@ export const useStudyStore = defineStore('study', () => {
                 await loadPredictions()
             }
         } catch (e) {
+            showError(e instanceof Error ? e.message : 'Failed to start study session')
             throw e
         } finally {
             loading.value = false

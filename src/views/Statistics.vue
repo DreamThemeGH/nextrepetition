@@ -51,17 +51,21 @@
                 <table>
                     <thead>
                         <tr>
-                            <th>{{ t('flashcards', 'Deck') }}</th>
-                            <th>{{ t('flashcards', 'Total') }}</th>
-                            <th>{{ t('flashcards', 'Due') }}</th>
-                            <th>{{ t('flashcards', 'New') }}</th>
+                            <th scope="col">{{ t('flashcards', 'Deck') }}</th>
+                            <th scope="col">{{ t('flashcards', 'Total') }}</th>
+                            <th scope="col">{{ t('flashcards', 'Due') }}</th>
+                            <th scope="col">{{ t('flashcards', 'New') }}</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr v-for="deck in statsStore.overview.decks"
                             :key="deck.path"
                             class="deck-stat-row"
-                            @click="loadDeckDetails(deck.path)">
+                            tabindex="0"
+                            :aria-label="t('flashcards', 'Show details for') + ' ' + deck.name"
+                            @click="loadDeckDetails(deck.path)"
+                            @keydown.enter="loadDeckDetails(deck.path)"
+                            @keydown.space.prevent="loadDeckDetails(deck.path)">
                             <td>{{ deck.name }}</td>
                             <td>{{ deck.total }}</td>
                             <td class="td-due">{{ deck.due }}</td>
@@ -96,23 +100,50 @@ import { useStatsStore } from '@/stores/stats'
 const statsStore = useStatsStore()
 const deckStatsData = ref<any>(null)
 
-const chartOptions = {
+const chartOptions = computed(() => ({
     responsive: true,
     maintainAspectRatio: false,
-    plugins: { legend: { display: false } },
-}
+    plugins: {
+        legend: { display: false },
+        tooltip: {
+            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+            cornerRadius: 8,
+            padding: 10,
+            titleFont: { size: 13 },
+            bodyFont: { size: 12 },
+        },
+    },
+    scales: {
+        x: {
+            grid: { display: false },
+            ticks: { color: 'var(--color-text-maxcontrast)' },
+        },
+        y: {
+            beginAtZero: true,
+            grid: { color: 'rgba(128, 128, 128, 0.15)' },
+            ticks: {
+                color: 'var(--color-text-maxcontrast)',
+                precision: 0,
+            },
+        },
+    },
+}))
 
 const forecastChartData = computed(() => {
     if (!deckStatsData.value?.dueForecast) {
         return { labels: [], datasets: [] }
     }
     const forecast = deckStatsData.value.dueForecast
+    const values = Object.values(forecast) as number[]
     return {
         labels: Object.keys(forecast).map(d => d === '0' ? t('flashcards', 'Today') : `+${d}d`),
         datasets: [{
-            data: Object.values(forecast),
-            backgroundColor: '#e67700',
-            borderRadius: 4,
+            data: values,
+            backgroundColor: values.map((_, i) =>
+                i === 0 ? 'rgba(230, 119, 0, 0.9)' : 'rgba(230, 119, 0, 0.5)',
+            ),
+            borderRadius: 6,
+            borderSkipped: false,
         }],
     }
 })
@@ -123,11 +154,13 @@ const intervalChartData = computed(() => {
     }
     const dist = deckStatsData.value.intervalDistribution
     return {
-        labels: Object.keys(dist),
+        labels: Object.keys(dist).map(k => `${k}d`),
         datasets: [{
             data: Object.values(dist),
-            backgroundColor: '#1971c2',
-            borderRadius: 4,
+            backgroundColor: 'rgba(25, 113, 194, 0.6)',
+            hoverBackgroundColor: 'rgba(25, 113, 194, 0.85)',
+            borderRadius: 6,
+            borderSkipped: false,
         }],
     }
 })
@@ -188,10 +221,15 @@ onMounted(async () => {
 }
 
 .chart-container {
-    height: 250px;
+    height: 280px;
     background: var(--color-background-dark);
     border-radius: 12px;
-    padding: 16px;
+    padding: 20px;
+
+    @media (max-width: 768px) {
+        height: 200px;
+        padding: 12px;
+    }
 }
 
 .deck-stats-table {

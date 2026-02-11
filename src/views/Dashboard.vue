@@ -8,47 +8,54 @@
             <NcLoadingIcon :size="44" />
         </div>
 
-        <div v-else class="dashboard-grid">
-            <!-- Summary cards -->
+        <div v-else class="dashboard-content">
+            <!-- Global summary cards -->
             <div class="summary-cards">
-                <div class="summary-card summary-due" @click="goToDecks">
+                <div class="summary-card summary-due"
+                    role="button"
+                    tabindex="0"
+                    :aria-label="t('flashcards', 'Cards due today') + ': ' + (stats?.totalDue ?? 0)"
+                    @click="goToDecks"
+                    @keydown.enter="goToDecks"
+                    @keydown.space.prevent="goToDecks">
+                    <div class="summary-icon">📚</div>
                     <div class="summary-number">{{ stats?.totalDue ?? 0 }}</div>
                     <div class="summary-label">{{ t('flashcards', 'Cards due today') }}</div>
                 </div>
                 <div class="summary-card summary-new">
+                    <div class="summary-icon">✨</div>
                     <div class="summary-number">{{ stats?.totalNew ?? 0 }}</div>
                     <div class="summary-label">{{ t('flashcards', 'New cards') }}</div>
                 </div>
                 <div class="summary-card summary-total">
+                    <div class="summary-icon">🗂️</div>
                     <div class="summary-number">{{ stats?.totalCards ?? 0 }}</div>
                     <div class="summary-label">{{ t('flashcards', 'Total cards') }}</div>
                 </div>
                 <div class="summary-card summary-decks">
+                    <div class="summary-icon">📂</div>
                     <div class="summary-number">{{ stats?.totalDecks ?? 0 }}</div>
                     <div class="summary-label">{{ t('flashcards', 'Decks') }}</div>
                 </div>
-            </div>
-
-            <!-- Due decks list -->
-            <div class="due-decks" v-if="dueDecks.length > 0">
-                <h3>{{ t('flashcards', 'Ready to review') }}</h3>
-                <div class="deck-list">
-                    <div v-for="deck in dueDecks"
-                        :key="deck.path"
-                        class="deck-item"
-                        @click="startStudy(deck.path)">
-                        <div class="deck-name">{{ deck.name }}</div>
-                        <div class="deck-counts">
-                            <span class="count-due">{{ deck.due }} {{ t('flashcards', 'due') }}</span>
-                            <span v-if="deck.new > 0" class="count-new">
-                                +{{ deck.new }} {{ t('flashcards', 'new') }}
-                            </span>
-                        </div>
-                    </div>
+                <div class="summary-card summary-reviewed">
+                    <div class="summary-icon">✅</div>
+                    <div class="summary-number">{{ stats?.totalReviewed ?? 0 }}</div>
+                    <div class="summary-label">{{ t('flashcards', 'Reviewed today') }}</div>
                 </div>
             </div>
 
-            <div v-else class="no-due">
+            <!-- Quick action -->
+            <div class="quick-actions">
+                <NcButton type="primary" wide @click="goToDecks">
+                    {{ hasDue
+                        ? t('flashcards', 'Start studying ({count} due)', { count: stats?.totalDue ?? 0 })
+                        : t('flashcards', 'Browse decks')
+                    }}
+                </NcButton>
+            </div>
+
+            <!-- All caught up message -->
+            <div v-if="!hasDue" class="no-due">
                 <p>🎉 {{ t('flashcards', 'All caught up! No cards due today.') }}</p>
             </div>
         </div>
@@ -60,6 +67,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { translate as t } from '@nextcloud/l10n'
 import NcLoadingIcon from '@nextcloud/vue/components/NcLoadingIcon'
+import NcButton from '@nextcloud/vue/components/NcButton'
 import { useStatsStore } from '@/stores/stats'
 
 const router = useRouter()
@@ -67,26 +75,15 @@ const statsStore = useStatsStore()
 
 const loading = ref(true)
 const stats = computed(() => statsStore.overview)
-
-const dueDecks = computed(() =>
-    statsStore.dueCounts.filter(d => d.due > 0 || d.new > 0)
-        .sort((a, b) => b.due - a.due),
-)
+const hasDue = computed(() => (stats.value?.totalDue ?? 0) > 0)
 
 function goToDecks() {
     router.push({ name: 'decks' })
 }
 
-function startStudy(path: string) {
-    router.push({ name: 'study', params: { path } })
-}
-
 onMounted(async () => {
     try {
-        await Promise.all([
-            statsStore.loadOverview(),
-            statsStore.loadDueCounts(),
-        ])
+        await statsStore.loadOverview()
     } finally {
         loading.value = false
     }
@@ -100,9 +97,14 @@ onMounted(async () => {
     padding: 60px 0;
 }
 
+.dashboard-content {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
 .summary-cards {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
     gap: 16px;
     margin-bottom: 32px;
 }
@@ -110,7 +112,7 @@ onMounted(async () => {
 .summary-card {
     background: var(--color-background-dark);
     border-radius: 12px;
-    padding: 20px;
+    padding: 20px 16px;
     text-align: center;
     cursor: pointer;
     transition: transform 0.15s, box-shadow 0.15s;
@@ -121,64 +123,33 @@ onMounted(async () => {
     }
 }
 
+.summary-icon {
+    font-size: 1.8em;
+    margin-bottom: 8px;
+}
+
 .summary-number {
-    font-size: 2.2em;
+    font-size: 2em;
     font-weight: 700;
     line-height: 1.2;
 }
 
 .summary-label {
-    font-size: 0.9em;
+    font-size: 0.85em;
     color: var(--color-text-maxcontrast);
     margin-top: 4px;
 }
 
-.summary-due .summary-number { color: $flashcards-warning; }
-.summary-new .summary-number { color: $card-new; }
+.summary-due .summary-number { color: var(--color-warning); }
+.summary-new .summary-number { color: var(--color-info); }
 .summary-total .summary-number { color: var(--color-text-light); }
 .summary-decks .summary-number { color: var(--color-primary); }
+.summary-reviewed .summary-number { color: var(--color-success); }
 
-.due-decks h3 {
-    margin-bottom: 12px;
-}
-
-.deck-list {
+.quick-actions {
     display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-
-.deck-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 12px 16px;
-    background: var(--color-background-dark);
-    border-radius: 8px;
-    cursor: pointer;
-    transition: background 0.15s;
-
-    &:hover {
-        background: var(--color-background-hover);
-    }
-}
-
-.deck-name {
-    font-weight: 600;
-}
-
-.deck-counts {
-    display: flex;
-    gap: 12px;
-}
-
-.count-due {
-    color: $flashcards-warning;
-    font-weight: 600;
-}
-
-.count-new {
-    color: $card-new;
+    justify-content: center;
+    margin-bottom: 32px;
 }
 
 .no-due {

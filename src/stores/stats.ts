@@ -6,6 +6,7 @@
 
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
+import { showError } from '@nextcloud/dialogs'
 import type { OverviewStats, DeckStats, DueCount } from '@/types/sr'
 import * as api from '@/services/api'
 
@@ -19,6 +20,8 @@ export const useStatsStore = defineStore('stats', () => {
         loading.value = true
         try {
             overview.value = await api.fetchOverviewStats()
+        } catch (e) {
+            showError('Failed to load statistics')
         } finally {
             loading.value = false
         }
@@ -28,6 +31,8 @@ export const useStatsStore = defineStore('stats', () => {
         loading.value = true
         try {
             deckStats.value = await api.fetchDeckStats(path)
+        } catch (e) {
+            showError('Failed to load deck statistics')
         } finally {
             loading.value = false
         }

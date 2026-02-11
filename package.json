@@ -16,6 +16,7 @@
         "test:coverage": "vitest run --coverage"
     },
     "dependencies": {
+        "@nextcloud/auth": "^2.5.3",
         "@nextcloud/axios": "^2.5.0",
         "@nextcloud/dialogs": "^7.0.0",
         "@nextcloud/initial-state": "^3.0.0",

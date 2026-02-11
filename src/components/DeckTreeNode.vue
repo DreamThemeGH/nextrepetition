@@ -1,0 +1,201 @@
+<template>
+    <li class="deck-tree-node" role="treeitem"
+        :aria-expanded="node.type === 'folder' ? expanded : undefined">
+        <!-- Folder node -->
+        <div v-if="node.type === 'folder'"
+            class="tree-row tree-folder"
+            role="button"
+            tabindex="0"
+            :aria-expanded="expanded"
+            :aria-label="t('flashcards', 'Toggle folder') + ' ' + node.name"
+            :style="{ paddingLeft: (depth * 24 + 8) + 'px' }"
+            @click="expanded = !expanded"
+            @keydown.enter="expanded = !expanded"
+            @keydown.space.prevent="expanded = !expanded">
+            <span class="expand-icon">{{ expanded ? '▼' : '▶' }}</span>
+            <span class="folder-icon">{{ expanded ? '📂' : '📁' }}</span>
+            <span class="node-name">{{ node.name }}</span>
+            <span class="folder-badge" v-if="folderDueCount > 0">
+                {{ folderDueCount }} {{ t('flashcards', 'due') }}
+            </span>
+        </div>
+
+        <!-- Deck node -->
+        <div v-else
+            class="tree-row tree-deck"
+            :class="{ 'has-due': hasDue }"
+            :style="{ paddingLeft: (depth * 24 + 8) + 'px' }">
+            <span class="deck-icon">📄</span>
+            <span class="node-name deck-name">{{ node.name }}</span>
+
+            <div class="deck-stats">
+                <span class="stat-total">{{ node.deck?.totalCards ?? 0 }}</span>
+                <span v-if="hasDue" class="stat-due">{{ node.deck?.dueCards ?? 0 }} due</span>
+                <span v-if="hasNew" class="stat-new">+{{ node.deck?.newCards ?? 0 }} new</span>
+            </div>
+
+            <div class="deck-actions">
+                <NcButton v-if="hasDue || hasNew"
+                    type="primary"
+                    :aria-label="t('flashcards', 'Study')"
+                    @click.stop="$emit('study', node.deck!.path)">
+                    {{ t('flashcards', 'Study') }}
+                </NcButton>
+                <NcButton
+                    :aria-label="t('flashcards', 'Browse')"
+                    @click.stop="$emit('browse', node.deck!.path)">
+                    {{ t('flashcards', 'Browse') }}
+                </NcButton>
+            </div>
+        </div>
+
+        <!-- Children -->
+        <ul v-if="node.type === 'folder' && expanded && node.children.length > 0"
+            class="tree-children" role="group">
+            <DeckTreeNode
+                v-for="child in node.children"
+                :key="child.key"
+                :node="child"
+                :depth="depth + 1"
+                @study="$emit('study', $event)"
+                @browse="$emit('browse', $event)" />
+        </ul>
+    </li>
+</template>
+
+<script setup lang="ts">
+import { ref, computed } from 'vue'
+import { translate as t } from '@nextcloud/l10n'
+import NcButton from '@nextcloud/vue/components/NcButton'
+import type { TreeNode } from './DeckTree.vue'
+
+const props = defineProps<{
+    node: TreeNode
+    depth: number
+}>()
+
+defineEmits<{
+    (e: 'study', path: string): void
+    (e: 'browse', path: string): void
+}>()
+
+const expanded = ref(true)  // Folders expanded by default
+
+const hasDue = computed(() => (props.node.deck?.dueCards ?? 0) > 0)
+const hasNew = computed(() => (props.node.deck?.newCards ?? 0) > 0)
+
+/** Sum due cards in all descendants */
+const folderDueCount = computed(() => {
+    if (props.node.type !== 'folder') return 0
+    return countDue(props.node)
+})
+
+function countDue(node: TreeNode): number {
+    let count = 0
+    if (node.deck) count += node.deck.dueCards || 0
+    for (const child of node.children) {
+        count += countDue(child)
+    }
+    return count
+}
+</script>
+
+<style lang="scss" scoped>
+.deck-tree-node {
+    list-style: none;
+}
+
+.tree-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px;
+    border-radius: 8px;
+    transition: background-color 0.15s;
+    cursor: default;
+
+    &:hover {
+        background: var(--color-background-hover);
+    }
+}
+
+.tree-folder {
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.tree-deck {
+    &.has-due {
+        background: var(--color-primary-element-light);
+        border-radius: 8px;
+    }
+}
+
+.expand-icon {
+    font-size: 10px;
+    width: 16px;
+    text-align: center;
+    color: var(--color-text-maxcontrast);
+    flex-shrink: 0;
+}
+
+.folder-icon,
+.deck-icon {
+    font-size: 16px;
+    flex-shrink: 0;
+}
+
+.node-name {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.deck-name {
+    font-weight: 500;
+}
+
+.folder-badge {
+    font-size: 0.8em;
+    padding: 2px 8px;
+    border-radius: 10px;
+    background: var(--color-warning);
+    color: white;
+    font-weight: 600;
+    flex-shrink: 0;
+}
+
+.deck-stats {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-shrink: 0;
+    font-size: 0.85em;
+}
+
+.stat-total {
+    color: var(--color-text-maxcontrast);
+}
+
+.stat-due {
+    color: var(--color-warning);
+    font-weight: 600;
+}
+
+.stat-new {
+    color: var(--color-info);
+}
+
+.deck-actions {
+    display: flex;
+    gap: 4px;
+    flex-shrink: 0;
+}
+
+.tree-children {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+</style>
