@@ -202,7 +202,7 @@ function countDue(node: TreeNode): number {
     }
     
     .tree-deck {
-        flex-wrap: wrap;
+        flex-wrap: wrap !important;
         gap: 8px;
     }
     
@@ -211,24 +211,27 @@ function countDue(node: TreeNode): number {
         order: 0;
     }
 
-    .node-name {
-        flex: 1 1 100%;
+    .tree-deck .node-name,
+    .tree-deck .deck-name {
+        flex: 1 1 100% !important;
         order: 1;
         margin-bottom: 8px;
-        white-space: normal;
-        word-break: break-word;
+        white-space: normal !important;
+        word-break: break-word !important;
         font-size: 0.95em;
         min-width: 0;
+        overflow: visible !important;
+        text-overflow: clip !important;
     }
 
-    .deck-stats {
+    .tree-deck .deck-stats {
         order: 2;
         flex: 1 1 auto;
         font-size: 0.8em;
         gap: 6px;
     }
 
-    .deck-actions {
+    .tree-deck .deck-actions {
         order: 3;
         flex-shrink: 0;
         gap: 4px;

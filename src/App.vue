@@ -1,6 +1,6 @@
 <template>
     <NcContent app-name="flashcards">
-        <NcAppNavigation>
+        <NcAppNavigation :open.sync="navigationOpen">
             <template #list>
                 <NcAppNavigationItem :name="t('flashcards', 'Dashboard')"
                     :to="{ name: 'dashboard' }"
@@ -43,7 +43,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, computed } from 'vue'
+import { onMounted, computed, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { translate as t } from '@nextcloud/l10n'
 
@@ -65,10 +65,20 @@ import { useAutoSave } from '@/composables/useAutoSave'
 const route = useRoute()
 const deckStore = useDeckStore()
 const settingsStore = useSettingsStore()
+const navigationOpen = ref(true)
+
 const dueCount = computed(() => {
     const val = deckStore.totalDue
     if (typeof val !== 'number' || !Number.isFinite(val) || val < 0) return 0
     return val
+})
+
+// Auto-hide navigation on mobile when entering study session
+const isMobile = computed(() => window.innerWidth <= 768)
+watch(() => route.name, (newRoute) => {
+    if (isMobile.value && newRoute === 'study') {
+        navigationOpen.value = false
+    }
 })
 
 console.log('[flashcards] v2.0.2 loaded')
