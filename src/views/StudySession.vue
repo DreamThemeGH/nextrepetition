@@ -100,6 +100,14 @@
                     <div class="card-face card-back">
                         <div class="card-content">
                             <template v-if="isBasic(studyStore.currentCard)">
+                                <!-- Show original word/question first -->
+                                <div class="card-word-original">
+                                    {{ studyStore.isReversed
+                                        ? studyStore.currentCard.back
+                                        : studyStore.currentCard.front }}
+                                </div>
+                                <div class="card-divider"></div>
+                                <!-- Then show the answer -->
                                 <div class="card-word">
                                     {{ studyStore.isReversed
                                         ? studyStore.currentCard.front
@@ -460,6 +468,21 @@ onUnmounted(() => {
 .card-content {
     text-align: center;
     width: 100%;
+}
+
+.card-word-original {
+    font-size: 1.4em;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: var(--color-text-maxcontrast);
+    word-break: break-word;
+}
+
+.card-divider {
+    width: 80px;
+    height: 2px;
+    background: var(--color-border);
+    margin: 16px auto;
 }
 
 .card-word {
