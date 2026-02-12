@@ -84,13 +84,22 @@ class StatsService {
         foreach ($cards as $card) {
             $states[$card['state']] = ($states[$card['state']] ?? 0) + 1;
 
+            // Find earliest due date for this card (for forecast)
+            $earliestDue = null;
+            
             foreach ($card['sr'] as $sr) {
                 $intervals[] = $sr['interval'];
                 $easeFactors[] = $sr['ease'] / 100.0;
 
-                // Due forecast
                 $dueDate = new \DateTime($sr['date']);
-                $diff = (int)$today->diff($dueDate)->format('%r%a');
+                if ($earliestDue === null || $dueDate < $earliestDue) {
+                    $earliestDue = $dueDate;
+                }
+            }
+
+            // Count card once for due forecast based on earliest due date
+            if ($earliestDue !== null) {
+                $diff = (int)$today->diff($earliestDue)->format('%r%a');
                 if ($diff >= 0 && $diff <= 30) {
                     $dueForecast[$diff] = ($dueForecast[$diff] ?? 0) + 1;
                 }
