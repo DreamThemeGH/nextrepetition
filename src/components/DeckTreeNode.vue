@@ -197,24 +197,46 @@ function countDue(node: TreeNode): number {
 
 /* Mobile responsive layout */
 @media (max-width: 768px) {
+    .tree-row {
+        padding: 12px 8px;
+    }
+    
     .tree-deck {
         flex-wrap: wrap;
-        gap: 4px;
+        gap: 8px;
+    }
+    
+    .deck-icon {
+        flex-basis: auto;
+        order: 0;
     }
 
     .node-name {
-        flex-basis: 100%;
-        margin-bottom: 4px;
+        flex: 1 1 100%;
+        order: 1;
+        margin-bottom: 8px;
+        white-space: normal;
+        word-break: break-word;
+        font-size: 0.95em;
+        min-width: 0;
     }
 
     .deck-stats {
-        flex: 1;
+        order: 2;
+        flex: 1 1 auto;
         font-size: 0.8em;
+        gap: 6px;
     }
 
     .deck-actions {
+        order: 3;
         flex-shrink: 0;
-        gap: 2px;
+        gap: 4px;
+        
+        :deep(.button-vue) {
+            padding: 6px 12px;
+            font-size: 0.85em;
+        }
     }
 }
 
