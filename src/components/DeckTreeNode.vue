@@ -25,27 +25,33 @@
             class="tree-row tree-deck"
             :class="{ 'has-due': hasDue }"
             :style="{ paddingLeft: (depth * 24 + 8) + 'px' }">
-            <span class="deck-icon">📄</span>
-            <span class="node-name deck-name">{{ node.name }}</span>
-
-            <div class="deck-stats">
-                <span class="stat-total">{{ node.deck?.totalCards ?? 0 }}</span>
-                <span v-if="hasDue" class="stat-due">{{ node.deck?.dueCards ?? 0 }} due</span>
-                <span v-if="hasNew" class="stat-new">+{{ node.deck?.newCards ?? 0 }} new</span>
+            <!-- Line 1: Icon + Name -->
+            <div class="deck-header">
+                <span class="deck-icon">📄</span>
+                <span class="node-name deck-name" :title="node.name">{{ node.name }}</span>
             </div>
+            
+            <!-- Line 2: Stats (left) + Actions (right) -->
+            <div class="deck-footer">
+                <div class="deck-stats">
+                    <span class="stat-total">{{ node.deck?.totalCards ?? 0 }}</span>
+                    <span v-if="hasDue" class="stat-due">{{ node.deck?.dueCards ?? 0 }} due</span>
+                    <span v-if="hasNew" class="stat-new">+{{ node.deck?.newCards ?? 0 }} new</span>
+                </div>
 
-            <div class="deck-actions">
-                <NcButton v-if="hasDue || hasNew"
-                    type="primary"
-                    :aria-label="t('flashcards', 'Study')"
-                    @click.stop="$emit('study', node.deck!.path)">
-                    {{ t('flashcards', 'Study') }}
-                </NcButton>
-                <NcButton
-                    :aria-label="t('flashcards', 'Browse')"
-                    @click.stop="$emit('browse', node.deck!.path)">
-                    {{ t('flashcards', 'Browse') }}
-                </NcButton>
+                <div class="deck-actions">
+                    <NcButton v-if="hasDue || hasNew"
+                        type="primary"
+                        :aria-label="t('flashcards', 'Study')"
+                        @click.stop="$emit('study', node.deck!.path)">
+                        {{ t('flashcards', 'Study') }}
+                    </NcButton>
+                    <NcButton
+                        :aria-label="t('flashcards', 'Browse')"
+                        @click.stop="$emit('browse', node.deck!.path)">
+                        {{ t('flashcards', 'Browse') }}
+                    </NcButton>
+                </div>
             </div>
         </div>
 
@@ -107,8 +113,8 @@ function countDue(node: TreeNode): number {
 
 .tree-row {
     display: flex;
-    align-items: center;
-    gap: 8px;
+    flex-direction: column;
+    gap: 4px;
     padding: 8px;
     border-radius: 8px;
     transition: background-color 0.15s;
@@ -120,15 +126,32 @@ function countDue(node: TreeNode): number {
 }
 
 .tree-folder {
+    flex-direction: row;
+    align-items: center;
     cursor: pointer;
     font-weight: 600;
 }
 
 .tree-deck {
+    gap: 6px;
+    
     &.has-due {
         background: var(--color-primary-element-light);
         border-radius: 8px;
     }
+}
+
+.deck-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.deck-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
 }
 
 .expand-icon {
@@ -150,10 +173,12 @@ function countDue(node: TreeNode): number {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    min-width: 0;
 }
 
 .deck-name {
     font-weight: 500;
+    font-size: 0.95em;
 }
 
 .folder-badge {
@@ -170,7 +195,6 @@ function countDue(node: TreeNode): number {
     display: flex;
     gap: 8px;
     align-items: center;
-    flex-shrink: 0;
     font-size: 0.85em;
 }
 
@@ -192,52 +216,23 @@ function countDue(node: TreeNode): number {
 .deck-actions {
     display: flex;
     gap: 4px;
-    flex-shrink: 0;
 }
 
 /* Mobile responsive layout */
 @media (max-width: 768px) {
     .tree-row {
-        padding: 12px 8px;
+        padding: 10px 8px;
     }
     
-    .tree-deck {
-        flex-wrap: wrap !important;
-        gap: 8px;
+    .deck-footer {
+        flex-wrap: wrap;
     }
     
-    .deck-icon {
-        flex-basis: auto;
-        order: 0;
-    }
-
-    .tree-deck .node-name,
-    .tree-deck .deck-name {
-        flex: 1 1 100% !important;
-        order: 1;
-        margin-bottom: 8px;
-        white-space: normal !important;
-        word-break: break-word !important;
-        font-size: 0.95em;
-        min-width: 0;
-        overflow: visible !important;
-        text-overflow: clip !important;
-    }
-
-    .tree-deck .deck-stats {
-        order: 2;
-        flex: 1 1 auto;
-        font-size: 0.8em;
-        gap: 6px;
-    }
-
-    .tree-deck .deck-actions {
-        order: 3;
-        flex-shrink: 0;
+    .deck-actions {
         gap: 4px;
         
         :deep(.button-vue) {
-            padding: 6px 12px;
+            padding: 6px 10px;
             font-size: 0.85em;
         }
     }

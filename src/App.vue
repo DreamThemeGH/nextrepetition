@@ -73,10 +73,11 @@ const dueCount = computed(() => {
     return val
 })
 
-// Auto-hide navigation on mobile when entering study session
+// Auto-hide navigation on mobile when navigating to any section
 const isMobile = computed(() => window.innerWidth <= 768)
 watch(() => route.name, (newRoute) => {
-    if (isMobile.value && newRoute === 'study') {
+    // Close navigation on mobile when selecting any menu item
+    if (isMobile.value && newRoute) {
         navigationOpen.value = false
     }
 })

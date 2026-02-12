@@ -133,9 +133,7 @@
                                 </div>
                             </template>
                             <template v-else-if="isCloze(studyStore.currentCard)">
-                                <!-- Show original sentence first -->
-                                <div class="card-sentence-original" v-html="renderCloze(studyStore.currentCard, false)"></div>
-                                <!-- Then show revealed version -->
+                                <!-- Show revealed sentence with answers -->
                                 <div class="card-sentence-revealed" v-html="renderCloze(studyStore.currentCard, true)"></div>
                                 <!-- Translation if present -->
                                 <div v-if="studyStore.currentCard.translation" class="card-translation">
@@ -522,13 +520,6 @@ onUnmounted(() => {
 .card-sentence {
     font-size: 1.3em;
     line-height: 1.6;
-}
-
-.card-sentence-original {
-    font-size: 1.1em;
-    line-height: 1.5;
-    color: var(--color-text-maxcontrast);
-    margin-bottom: 16px;
 }
 
 .card-sentence-revealed {
