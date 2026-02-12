@@ -49,6 +49,9 @@ export default defineConfig(({ mode }) => {
         },
         define: {
             'process.env.NODE_ENV': JSON.stringify(mode),
+            // Required by @nextcloud/vue to identify the app
+            appName: JSON.stringify('flashcards'),
+            appVersion: JSON.stringify('2.0.2'),
         },
         build: {
             outDir: path.resolve(__dirname, 'js'),
