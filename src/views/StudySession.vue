@@ -46,6 +46,19 @@
 
         <!-- Active study card -->
         <div v-else-if="studyStore.currentCard" class="study-active">
+            <!-- Back button + deck name header -->
+            <div class="study-header">
+                <NcButton type="tertiary"
+                    :aria-label="t('flashcards', 'Back to decks')"
+                    @click="goBack"
+                    class="back-button">
+                    <template #icon>
+                        <IconArrowLeft :size="20" />
+                    </template>
+                </NcButton>
+                <span class="study-deck-name" :title="currentDeckName">{{ currentDeckName }}</span>
+            </div>
+
             <!-- Progress bar -->
             <div class="study-progress" v-if="settingsStore.get('showProgress')"
                 role="progressbar"
@@ -208,6 +221,7 @@ import NcButton from '@nextcloud/vue/components/NcButton'
 import NcLoadingIcon from '@nextcloud/vue/components/NcLoadingIcon'
 import IconVolume from 'vue-material-design-icons/VolumeHigh.vue'
 import IconSwap from 'vue-material-design-icons/SwapHorizontal.vue'
+import IconArrowLeft from 'vue-material-design-icons/ArrowLeft.vue'
 
 import { useStudyStore } from '@/stores/study'
 import { useSettingsStore } from '@/stores/settings'
@@ -230,6 +244,18 @@ const tts = useTTS()
 const cardLayout = computed(() => settingsStore.get('cardLayout') || 'classic')
 const fullscreenMode = computed(() => settingsStore.get('fullscreenMode') === true)
 const buttonPosition = computed(() => settingsStore.get('buttonPosition') || 'bottom')
+
+const currentDeckName = computed(() => {
+    const deck = deckStore.currentDeck
+    if (deck) {
+        // Extract just the folder name from the path
+        const parts = deck.path.split('/')
+        return parts[parts.length - 1] || deck.path
+    }
+    // Fallback: extract from route path
+    const parts = props.path.split('/')
+    return parts[parts.length - 1] || props.path
+})
 
 const ratings = [
     { value: 1 as Rating, label: t('flashcards', 'Hard'), color: RATING_COLORS[1] },
@@ -316,7 +342,7 @@ async function speakCard() {
 }
 
 function goBack() {
-    deckStore.closeDeck()
+    // Navigate back to deck browser - the deck store will keep the current deck highlighted
     router.push({ name: 'decks' })
 }
 
@@ -403,6 +429,30 @@ onUnmounted(() => {
     display: flex;
     flex-direction: column;
     align-items: center;
+}
+
+.study-header {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-bottom: 8px;
+
+    .back-button {
+        flex-shrink: 0;
+        min-width: 36px !important;
+        min-height: 36px !important;
+        padding: 0 !important;
+    }
+
+    .study-deck-name {
+        font-size: 0.9em;
+        color: var(--color-text-maxcontrast);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        min-width: 0;
+    }
 }
 
 .study-progress {
