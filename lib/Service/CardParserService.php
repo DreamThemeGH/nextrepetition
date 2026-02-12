@@ -361,6 +361,7 @@ class CardParserService {
         $lines = explode("\n", $content);
         $hasCard = false;
         $hasSR = false;
+        $cardIsDue = false;
 
         for ($i = 0; $i < count($lines); $i++) {
             $trimmed = trim($lines[$i]);
@@ -368,15 +369,21 @@ class CardParserService {
             // Count card definitions
             if (preg_match(self::BASIC_REGEX, $trimmed) || preg_match(self::CLOZE_REGEX, $trimmed)) {
                 // Finalize previous card
-                if ($hasCard && !$hasSR) {
-                    $new++;
+                if ($hasCard) {
+                    if (!$hasSR) {
+                        $new++;
+                    } elseif ($cardIsDue) {
+                        $due++;
+                    }
                 }
+                
                 $total++;
                 $hasCard = true;
                 $hasSR = false;
+                $cardIsDue = false;
             }
 
-            // Count SR entries
+            // Check SR entries
             if (preg_match(self::SR_REGEX, $trimmed, $srMatch)) {
                 $hasSR = true;
                 $entries = [];
@@ -384,16 +391,20 @@ class CardParserService {
 
                 foreach ($entries as $entry) {
                     if ($entry[1] <= $today) {
-                        $due++;
-                        break; // Count card as due once
+                        $cardIsDue = true;
+                        break; // Card is due if at least one SR entry is due
                     }
                 }
             }
         }
 
-        // Last card
-        if ($hasCard && !$hasSR) {
-            $new++;
+        // Finalize last card
+        if ($hasCard) {
+            if (!$hasSR) {
+                $new++;
+            } elseif ($cardIsDue) {
+                $due++;
+            }
         }
 
         return [
