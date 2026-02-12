@@ -100,15 +100,19 @@
                     <div class="card-face card-back">
                         <div class="card-content">
                             <template v-if="isBasic(studyStore.currentCard)">
-                                <!-- Show original word/question first -->
+                                <!-- Show original word/question first (smaller, at top) -->
                                 <div class="card-word-original">
                                     {{ studyStore.isReversed
                                         ? studyStore.currentCard.back
                                         : studyStore.currentCard.front }}
                                 </div>
-                                <div class="card-divider"></div>
-                                <!-- Then show the answer -->
-                                <div class="card-word">
+                                <div v-if="!studyStore.isReversed && studyStore.currentCard.transcription"
+                                    class="card-transcription-top">
+                                    [{{ studyStore.currentCard.transcription }}]
+                                </div>
+                                
+                                <!-- Then show the answer (larger, in center) -->
+                                <div class="card-word-answer">
                                     {{ studyStore.isReversed
                                         ? studyStore.currentCard.front
                                         : studyStore.currentCard.back }}
@@ -117,7 +121,8 @@
                                     class="card-transcription">
                                     [{{ studyStore.currentCard.transcription }}]
                                 </div>
-                                <!-- Examples -->
+                                
+                                <!-- Examples/Comments below -->
                                 <div v-if="studyStore.currentCard.examples?.length"
                                     class="card-examples">
                                     <div v-for="(ex, i) in studyStore.currentCard.examples"
@@ -128,7 +133,14 @@
                                 </div>
                             </template>
                             <template v-else-if="isCloze(studyStore.currentCard)">
-                                <div class="card-sentence" v-html="renderCloze(studyStore.currentCard, true)"></div>
+                                <!-- Show original sentence first -->
+                                <div class="card-sentence-original" v-html="renderCloze(studyStore.currentCard, false)"></div>
+                                <!-- Then show revealed version -->
+                                <div class="card-sentence-revealed" v-html="renderCloze(studyStore.currentCard, true)"></div>
+                                <!-- Translation if present -->
+                                <div v-if="studyStore.currentCard.translation" class="card-translation">
+                                    {{ studyStore.currentCard.translation }}
+                                </div>
                             </template>
                         </div>
                     </div>
@@ -471,18 +483,27 @@ onUnmounted(() => {
 }
 
 .card-word-original {
-    font-size: 1.4em;
-    font-weight: 600;
+    font-size: 1.1em;
+    font-weight: 500;
     margin-bottom: 8px;
     color: var(--color-text-maxcontrast);
     word-break: break-word;
 }
 
-.card-divider {
-    width: 80px;
-    height: 2px;
-    background: var(--color-border);
-    margin: 16px auto;
+.card-transcription-top {
+    font-size: 0.9em;
+    color: var(--color-text-maxcontrast);
+    font-style: italic;
+    margin-bottom: 16px;
+}
+
+.card-word-answer {
+    font-size: 2em;
+    font-weight: 700;
+    margin-bottom: 8px;
+    margin-top: 12px;
+    word-break: break-word;
+    color: var(--color-primary);
 }
 
 .card-word {
@@ -501,6 +522,19 @@ onUnmounted(() => {
 .card-sentence {
     font-size: 1.3em;
     line-height: 1.6;
+}
+
+.card-sentence-original {
+    font-size: 1.1em;
+    line-height: 1.5;
+    color: var(--color-text-maxcontrast);
+    margin-bottom: 16px;
+}
+
+.card-sentence-revealed {
+    font-size: 1.4em;
+    line-height: 1.6;
+    font-weight: 600;
 }
 
 .card-translation {

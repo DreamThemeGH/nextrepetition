@@ -1,5 +1,6 @@
 <template>
     <div class="flashcards-page deck-browser-page">
+        <div class="deck-browser-container">
         <div class="flashcards-page-header">
             <h2>{{ t('flashcards', 'Decks') }}</h2>
             <NcButton type="primary" @click="showCreate = true">
@@ -46,6 +47,7 @@
                 </NcButton>
             </template>
         </NcDialog>
+        </div>
     </div>
 </template>
 
@@ -98,6 +100,18 @@ onMounted(() => {
 <style lang="scss" scoped>
 .deck-browser-page {
     max-width: 100%;
+}
+
+.deck-browser-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 16px;
+}
+
+@media (max-width: 768px) {
+    .deck-browser-container {
+        padding: 0 8px;
+    }
 }
 
 .loading-center {

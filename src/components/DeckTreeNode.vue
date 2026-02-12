@@ -195,6 +195,29 @@ function countDue(node: TreeNode): number {
     flex-shrink: 0;
 }
 
+/* Mobile responsive layout */
+@media (max-width: 768px) {
+    .tree-deck {
+        flex-wrap: wrap;
+        gap: 4px;
+    }
+
+    .node-name {
+        flex-basis: 100%;
+        margin-bottom: 4px;
+    }
+
+    .deck-stats {
+        flex: 1;
+        font-size: 0.8em;
+    }
+
+    .deck-actions {
+        flex-shrink: 0;
+        gap: 2px;
+    }
+}
+
 .tree-children {
     list-style: none;
     margin: 0;
