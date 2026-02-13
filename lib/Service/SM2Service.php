@@ -49,8 +49,8 @@ class SM2Service {
 
             // Calculate days overdue (delayedBeforeReview)
             $dueDate = new \DateTime($current['date']);
-            $diff = (int)$dueDate->diff($today)->format('%r%a');
-            $delayDays = max(0, $diff); // Only positive = overdue
+            $diff = $today->diff($dueDate);
+            $delayDays = $diff->invert ? $diff->days : 0; // Only if today > dueDate
         } else {
             // New card
             $interval = SM2Algorithm::INITIAL_INTERVAL;
@@ -100,8 +100,8 @@ class SM2Service {
             $ease = $current['ease'];
 
             $dueDate = new \DateTime($current['date']);
-            $diff = (int)$dueDate->diff($today)->format('%r%a');
-            $delayDays = max(0, $diff);
+            $diff = $today->diff($dueDate);
+            $delayDays = $diff->invert ? $diff->days : 0;
         } else {
             $interval = SM2Algorithm::INITIAL_INTERVAL;
             $ease = SM2Algorithm::DEFAULT_EASE;
