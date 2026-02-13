@@ -20,6 +20,27 @@ export default defineConfig(({ mode }) => {
     return {
         plugins: [
             vue(),
+            // Copy CSS from js/css/ to css/ after build so Util::addStyle can find it
+            {
+                name: 'copy-css-to-root',
+                closeBundle() {
+                    const srcDir = path.resolve(__dirname, 'js', 'css')
+                    const destDir = path.resolve(__dirname, 'css')
+                    if (fs.existsSync(srcDir)) {
+                        if (!fs.existsSync(destDir)) {
+                            fs.mkdirSync(destDir, { recursive: true })
+                        }
+                        for (const file of fs.readdirSync(srcDir)) {
+                            if (file.endsWith('.css')) {
+                                fs.copyFileSync(
+                                    path.join(srcDir, file),
+                                    path.join(destDir, file),
+                                )
+                            }
+                        }
+                    }
+                },
+            },
         ],
         resolve: {
             alias: {
