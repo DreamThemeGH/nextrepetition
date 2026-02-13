@@ -76,14 +76,15 @@
 
             <!-- Card display -->
             <div class="card-container"
-                :key="studyStore.currentIndex"
                 role="button"
                 tabindex="0"
                 :aria-label="studyStore.isFlipped ? t('flashcards', 'Flashcard (revealed)') : t('flashcards', 'Tap to reveal')"
                 @click="handleCardClick"
                 @keydown.enter="handleCardClick"
                 @keydown.space.prevent="handleCardClick">
-                <div class="flashcard" :class="{ flipped: studyStore.isFlipped }">
+                <div class="flashcard"
+                    :key="studyStore.currentIndex"
+                    :class="{ flipped: studyStore.isFlipped }">
                     <!-- Front -->
                     <div class="card-face card-front">
                         <div class="card-content">
