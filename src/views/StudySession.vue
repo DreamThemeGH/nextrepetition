@@ -76,6 +76,7 @@
 
             <!-- Card display -->
             <div class="card-container"
+                :key="studyStore.currentIndex"
                 role="button"
                 tabindex="0"
                 :aria-label="studyStore.isFlipped ? t('flashcards', 'Flashcard (revealed)') : t('flashcards', 'Tap to reveal')"

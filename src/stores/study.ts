@@ -144,12 +144,14 @@ export const useStudyStore = defineStore('study', () => {
                 queueDirections.value.push(isReversed.value ? 1 : 0)
             }
 
-            // Move to next card
-            currentIndex.value++
+            // CRITICAL: Reset flip state BEFORE changing currentIndex
+            // to avoid flashing the back side of the next card
             isFlipped.value = false
-            // Set direction from queue for next card
-            isReversed.value = (queueDirections.value[currentIndex.value] ?? 0) === 1
+            isReversed.value = (queueDirections.value[currentIndex.value + 1] ?? 0) === 1
             predictions.value = {}
+            
+            // Move to next card (after state reset to prevent flash)
+            currentIndex.value++
 
             // Load predictions for next card
             if (!isSessionComplete.value) {
