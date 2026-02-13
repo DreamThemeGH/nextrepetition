@@ -61,6 +61,9 @@ class SM2Service {
         // Calculate next review
         $result = $this->algorithm->calculateNextReview($rating, $interval, $ease, $delayDays);
 
+        // LOG: Algorithm output
+        error_log('[SM2] Algorithm result: interval=' . $interval . '→' . $result['interval'] . ', ease=' . $ease . '→' . $result['ease'] . ', delayDays=' . $delayDays);
+
         // Build new SR entry in file format
         $dueDate = clone $today;
         $dueDate->modify("+{$result['interval']} days");

@@ -163,6 +163,10 @@ class BufferService {
     public function save(string $userId, string $filePath): bool {
         $buffer = $this->getBuffer($userId, $filePath);
         if ($buffer === null || !$buffer['dirty']) {
+            $this->logger->error('[SAVE] Skip: buffer null or not dirty', [
+                'bufferNull' => $buffer === null,
+                'dirty' => $buffer['dirty'] ?? false,
+            ]);
             return false;
         }
 
@@ -172,7 +176,22 @@ class BufferService {
                 $buffer['parseResult']['cards'],
             );
 
+            // LOG: What we're writing
+            $this->logger->error('[SAVE] Writing to file', [
+                'userId' => $userId,
+                'filePath' => $filePath,
+                'contentLength' => strlen($content),
+                'cardCount' => count($buffer['parseResult']['cards']),
+                'firstCard' => substr($buffer['parseResult']['cards'][0]['front'] ?? '', 0, 30),
+                'firstSR' => $buffer['parseResult']['cards'][0]['sr'] ?? [],
+            ]);
+
             $this->fileService->writeFile($userId, $filePath, $content);
+
+            // LOG: Success
+            $this->logger->error('[SAVE] File written successfully', [
+                'filePath' => $filePath,
+            ]);
 
             // Update buffer state
             $buffer['dirty'] = false;

@@ -76,8 +76,17 @@ class ReviewController extends OCSController {
 
         $card = $cards[$cardIndex];
 
+        // LOG: Input data
+        $this->logger->error('[REVIEW] Input: cardIndex=' . $cardIndex . ', srIndex=' . $srIndex . ', rating=' . $rating, [
+            'oldSR' => $card['sr'] ?? [],
+            'front' => substr($card['front'] ?? '', 0, 50),
+        ]);
+
         // Process review through SM-2
         $newSR = $this->sm2Service->processReview($card, $rating, $srIndex);
+
+        // LOG: SM-2 output
+        $this->logger->error('[REVIEW] SM-2 output: newSR', ['newSR' => $newSR]);
 
         // Update buffer
         $success = $this->bufferService->updateCardSR($this->userId, $path, $cardIndex, $newSR);
@@ -90,7 +99,9 @@ class ReviewController extends OCSController {
 
         // Auto-save to file immediately to prevent data loss
         // (user may close browser tab at any time)
-        $this->bufferService->save($this->userId, $path);
+        $this->logger->error('[REVIEW] Before save()', ['path' => $path]);
+        $saveResult = $this->bufferService->save($this->userId, $path);
+        $this->logger->error('[REVIEW] After save()', ['saveResult' => $saveResult]);
 
         return new DataResponse([
             'sr' => $newSR,
