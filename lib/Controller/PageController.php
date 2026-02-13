@@ -35,7 +35,7 @@ class PageController extends Controller {
     #[FrontpageRoute(verb: 'GET', url: '/')]
     public function index(): TemplateResponse {
         Util::addScript(Application::APP_ID, 'flashcards-main');
-        Util::addStyle(Application::APP_ID, 'nextcloud-flashcards');
+        Util::addStyle(Application::APP_ID, 'js/css/nextcloud-flashcards');
 
         return new TemplateResponse(Application::APP_ID, 'main');
     }
