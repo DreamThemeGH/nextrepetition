@@ -110,6 +110,15 @@ class BufferService {
     }
 
     /**
+     * Close deck and invalidate buffer cache.
+     * Call this after external file modifications (e.g., migrations).
+     */
+    public function closeDeck(string $userId, string $filePath): void {
+        $bufferKey = $this->bufferKey($userId, $filePath);
+        $this->cache->remove($bufferKey);
+    }
+
+    /**
      * Update a card's SR data in the buffer.
      */
     public function updateCardSR(string $userId, string $filePath, int $cardIndex, array $newSR): bool {
