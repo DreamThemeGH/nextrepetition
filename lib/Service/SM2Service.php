@@ -8,7 +8,11 @@ declare(strict_types=1);
  * Nextcloud Flashcards v2 — SM-2 Service
  *
  * Wraps SM2Algorithm for use with the file-based SR metadata format.
- * Converts between SR tag format (date, interval, ease×100) and SM-2 parameters.
+ * Obsidian SR compatible: ease is stored as integer (250=2.5×),
+ * interval in days, date as YYYY-MM-DD.
+ *
+ * No "repetitions" counter — Obsidian SR doesn't use it.
+ * delayedBeforeReview is calculated from (today - dueDate).
  */
 
 namespace OCA\Flashcards\Service;
@@ -28,46 +32,51 @@ class SM2Service {
      * Process a review answer for a card.
      *
      * @param array $card Card data with current SR entries
-     * @param int $rating User rating (0=Again, 1=Hard, 2=Good, 3=Easy, 4=VeryEasy)
+     * @param int $rating User rating (0=Again, 1=Hard, 2=Good, 3=Easy)
      * @param int $srIndex Which SR entry to update (0=front→back, 1=back→front)
      * @return array Updated SR entries array
      */
     public function processReview(array $card, int $rating, int $srIndex = 0): array {
         $srEntries = $card['sr'] ?? [];
+        $today = new \DateTime();
+        $todayStr = $today->format('Y-m-d');
 
         // Get current SR data or use defaults for new cards
-        if (isset($srEntries[$srIndex])) {
+        if (isset($srEntries[$srIndex]) && $srEntries[$srIndex]['date'] !== '2000-01-01') {
             $current = $srEntries[$srIndex];
             $interval = $current['interval'];
-            $ease = $current['ease'] / 100.0; // SR stores ease×100
-            $repetitions = $this->estimateRepetitions($interval, $ease);
+            $ease = $current['ease'];
+
+            // Calculate days overdue (delayedBeforeReview)
+            $dueDate = new \DateTime($current['date']);
+            $diff = (int)$dueDate->diff($today)->format('%r%a');
+            $delayDays = max(0, $diff); // Only positive = overdue
         } else {
-            $interval = 0;
-            $ease = SM2Algorithm::DEFAULT_EASE_FACTOR;
-            $repetitions = 0;
+            // New card
+            $interval = SM2Algorithm::INITIAL_INTERVAL;
+            $ease = SM2Algorithm::DEFAULT_EASE;
+            $delayDays = 0;
         }
 
         // Calculate next review
-        $result = $this->algorithm->calculateNextReview(
-            $rating,
-            $repetitions,
-            $interval,
-            $ease,
-        );
+        $result = $this->algorithm->calculateNextReview($rating, $interval, $ease, $delayDays);
 
         // Build new SR entry in file format
+        $dueDate = clone $today;
+        $dueDate->modify("+{$result['interval']} days");
+
         $newEntry = [
-            'date' => (new \DateTime())->modify("+{$result['interval']} days")->format('Y-m-d'),
+            'date' => $dueDate->format('Y-m-d'),
             'interval' => $result['interval'],
-            'ease' => (int)round($result['easeFactor'] * 100),
+            'ease' => $result['ease'],
         ];
 
-        // Ensure srEntries array is large enough
+        // Ensure srEntries array is large enough (fill with dummy entries for unreviewed directions)
         while (count($srEntries) <= $srIndex) {
             $srEntries[] = [
                 'date' => '2000-01-01',
-                'interval' => 1,
-                'ease' => (int)(SM2Algorithm::DEFAULT_EASE_FACTOR * 100),
+                'interval' => SM2Algorithm::INITIAL_INTERVAL,
+                'ease' => SM2Algorithm::DEFAULT_EASE,
             ];
         }
 
@@ -77,30 +86,33 @@ class SM2Service {
     }
 
     /**
-     * Predict intervals for all possible ratings.
+     * Predict intervals for all possible ratings (for button labels).
      *
-     * @return array<int, array{interval: int, label: string, date: string}>
+     * @return array<int, array{interval: int, ease: int, label: string, date: string}>
      */
     public function predictReview(array $card, int $srIndex = 0): array {
         $srEntries = $card['sr'] ?? [];
+        $today = new \DateTime();
 
-        if (isset($srEntries[$srIndex])) {
+        if (isset($srEntries[$srIndex]) && $srEntries[$srIndex]['date'] !== '2000-01-01') {
             $current = $srEntries[$srIndex];
             $interval = $current['interval'];
-            $ease = $current['ease'] / 100.0;
-            $repetitions = $this->estimateRepetitions($interval, $ease);
+            $ease = $current['ease'];
+
+            $dueDate = new \DateTime($current['date']);
+            $diff = (int)$dueDate->diff($today)->format('%r%a');
+            $delayDays = max(0, $diff);
         } else {
-            $interval = 0;
-            $ease = SM2Algorithm::DEFAULT_EASE_FACTOR;
-            $repetitions = 0;
+            $interval = SM2Algorithm::INITIAL_INTERVAL;
+            $ease = SM2Algorithm::DEFAULT_EASE;
+            $delayDays = 0;
         }
 
-        $predictions = $this->algorithm->predictIntervals($repetitions, $interval, $ease);
+        $predictions = $this->algorithm->predictIntervals($interval, $ease, $delayDays);
 
         // Add dates to predictions
-        $now = new \DateTime();
         foreach ($predictions as $rating => &$pred) {
-            $date = clone $now;
+            $date = clone $today;
             $date->modify("+{$pred['interval']} days");
             $pred['date'] = $date->format('Y-m-d');
         }
@@ -108,24 +120,5 @@ class SM2Service {
 
         return $predictions;
     }
-
-    /**
-     * Estimate repetitions count from interval and ease factor.
-     * SM-2 doesn't store repetitions in file, so we reverse-engineer it.
-     */
-    private function estimateRepetitions(int $interval, float $ease): int {
-        if ($interval <= 0) return 0;
-        if ($interval <= 1) return 0;
-        if ($interval <= 6) return 1;
-
-        // Estimate from interval growth: interval ≈ ease^(repetitions-1) * 6
-        $reps = 2;
-        $expected = 6;
-        while ($expected < $interval && $reps < 100) {
-            $expected = (int)round($expected * $ease);
-            $reps++;
-        }
-
-        return $reps;
-    }
+}
 }

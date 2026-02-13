@@ -289,18 +289,24 @@ class CardParserService {
         }
 
         // Determine card state from SR data
+        // Note: '2000-01-01' is a dummy date for unreviewed directions
         if (empty($card['sr'])) {
             $card['state'] = 'new';
         } else {
             $today = date('Y-m-d');
             $isDue = false;
+            $hasRealSR = false;
             foreach ($card['sr'] as $sr) {
+                if ($sr['date'] === '2000-01-01') {
+                    continue; // Skip dummy entries
+                }
+                $hasRealSR = true;
                 if ($sr['date'] <= $today) {
                     $isDue = true;
                     break;
                 }
             }
-            $card['state'] = $isDue ? 'due' : 'review';
+            $card['state'] = $hasRealSR ? ($isDue ? 'due' : 'review') : 'new';
         }
 
         return $card;
@@ -389,11 +395,20 @@ class CardParserService {
                 $entries = [];
                 preg_match_all(self::SR_ENTRY_REGEX, $srMatch[1], $entries, PREG_SET_ORDER);
 
+                $hasRealEntry = false;
                 foreach ($entries as $entry) {
+                    if ($entry[1] === '2000-01-01') {
+                        continue; // Skip dummy date for unreviewed direction
+                    }
+                    $hasRealEntry = true;
                     if ($entry[1] <= $today) {
                         $cardIsDue = true;
-                        break; // Card is due if at least one SR entry is due
+                        break; // Card is due if at least one real SR entry is due
                     }
+                }
+                // If all entries are dummy, treat as new card
+                if (!$hasRealEntry) {
+                    $hasSR = false;
                 }
             }
         }

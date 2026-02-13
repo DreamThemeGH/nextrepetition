@@ -124,16 +124,28 @@ class BufferService {
 
         $buffer['parseResult']['cards'][$cardIndex]['sr'] = $newSR;
 
-        // Update card state
+        // Update card state based on new SR data
+        // A card is "due" only if any non-dummy SR entry has date <= today
+        // After a review, all entries should be in the future → state = 'review'
         $today = date('Y-m-d');
         $isDue = false;
+        $hasRealSR = false;
         foreach ($newSR as $sr) {
+            if ($sr['date'] === '2000-01-01') {
+                continue; // Dummy entry for unreviewed direction
+            }
+            $hasRealSR = true;
             if ($sr['date'] <= $today) {
                 $isDue = true;
                 break;
             }
         }
-        $buffer['parseResult']['cards'][$cardIndex]['state'] = $isDue ? 'due' : 'review';
+
+        if (!$hasRealSR) {
+            $buffer['parseResult']['cards'][$cardIndex]['state'] = 'new';
+        } else {
+            $buffer['parseResult']['cards'][$cardIndex]['state'] = $isDue ? 'due' : 'review';
+        }
 
         $buffer['dirty'] = true;
 

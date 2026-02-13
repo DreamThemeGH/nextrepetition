@@ -39,7 +39,7 @@ class ReviewController extends OCSController {
      * {
      *   "path": "ObsidianSync/Serbian learning/Popular_word_387_flashcards.md",
      *   "cardIndex": 5,
-     *   "rating": 2,       // 0=Again, 1=Hard, 2=Good, 3=Easy, 4=VeryEasy
+     *   "rating": 2,       // 0=Again, 1=Hard, 2=Good, 3=Easy
      *   "srIndex": 0       // 0=front→back, 1=back→front (optional, default 0)
      * }
      */
@@ -61,8 +61,8 @@ class ReviewController extends OCSController {
         if ($cardIndex < 0) {
             return new DataResponse(['error' => 'Valid cardIndex is required'], Http::STATUS_BAD_REQUEST);
         }
-        if ($rating < 0 || $rating > 4) {
-            return new DataResponse(['error' => 'Rating must be 0-4'], Http::STATUS_BAD_REQUEST);
+        if ($rating < 0 || $rating > 3) {
+            return new DataResponse(['error' => 'Rating must be 0-3'], Http::STATUS_BAD_REQUEST);
         }
 
         // Get current card from buffer
@@ -87,6 +87,10 @@ class ReviewController extends OCSController {
                 Http::STATUS_INTERNAL_SERVER_ERROR,
             );
         }
+
+        // Auto-save to file immediately to prevent data loss
+        // (user may close browser tab at any time)
+        $this->bufferService->save($this->userId, $path);
 
         return new DataResponse([
             'sr' => $newSR,

@@ -5,81 +5,107 @@ declare(strict_types=1);
 /**
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
- * Nextcloud Flashcards v2 — SM-2 Spaced Repetition Algorithm
- * (Reused from v1 with minimal changes)
+ * Nextcloud Flashcards v2 — Spaced Repetition Algorithm
+ *
+ * Compatible with Obsidian Spaced Repetition plugin (osrSchedule).
+ * Uses the same interval/ease calculations to ensure .md file interoperability.
+ *
+ * Obsidian SR algorithm (SM-2-OSR variant):
+ *   Easy:  ease += 20; interval = (interval + delayDays) * ease / 100 * easyBonus
+ *   Good:  interval = (interval + delayDays/2) * ease / 100
+ *   Hard:  ease = max(130, ease - 20); interval = max(1, (interval + delayDays/4) * lapsesIntervalChange)
+ *   Again: reset to initial interval (1 day), ease = max(130, ease - 20)
+ *
+ * Key difference from classic SM-2: no "repetitions" counter needed.
+ * Ease is stored as integer (250 = 2.5× multiplier).
  */
 
 namespace OCA\Flashcards\Service\Algorithms;
 
 class SM2Algorithm {
+    // Rating constants (match frontend: 0=Again, 1=Hard, 2=Good, 3=Easy)
     public const RATING_AGAIN = 0;
     public const RATING_HARD = 1;
     public const RATING_GOOD = 2;
     public const RATING_EASY = 3;
-    public const RATING_VERY_EASY = 4;
 
-    public const MIN_EASE_FACTOR = 1.3;
-    public const DEFAULT_EASE_FACTOR = 2.5;
+    // Algorithm constants (match Obsidian SR defaults)
+    public const DEFAULT_EASE = 250;       // 2.5× multiplier (stored as integer)
+    public const MIN_EASE = 130;           // 1.3× minimum (stored as integer)
+    public const INITIAL_INTERVAL = 1;     // 1 day for new cards
+    public const MAXIMUM_INTERVAL = 36525; // ~100 years cap
+    public const EASY_BONUS = 1.3;         // Extra multiplier for Easy
+    public const LAPSES_INTERVAL_CHANGE = 0.5; // Interval reduction for Hard
 
     /**
-     * Calculate the next review parameters based on the user's rating.
+     * Calculate the next review schedule (Obsidian SR compatible).
      *
-     * @param int $rating User's self-assessment (0-4)
-     * @param int $repetitions Number of consecutive correct reviews
-     * @param int $interval Current interval in days
-     * @param float $easeFactor Current ease factor (≥ 1.3)
-     * @return array{interval: int, repetitions: int, easeFactor: float, state: string}
+     * @param int   $rating   User rating: 0=Again, 1=Hard, 2=Good, 3=Easy
+     * @param int   $interval Current interval in days (from SR tag)
+     * @param int   $ease     Current ease as integer (250=2.5×, from SR tag)
+     * @param int   $delayDays Days overdue (today - dueDate, 0 if not overdue)
+     * @return array{interval: int, ease: int}
      */
     public function calculateNextReview(
         int $rating,
-        int $repetitions,
         int $interval,
-        float $easeFactor,
+        int $ease,
+        int $delayDays = 0,
     ): array {
-        $rating = max(0, min(4, $rating));
+        $delayDays = max(0, $delayDays);
+        $newInterval = (float)$interval;
 
-        if ($rating >= self::RATING_GOOD) {
-            if ($repetitions === 0) {
-                $interval = 1;
-            } elseif ($repetitions === 1) {
-                $interval = 6;
-            } else {
-                $interval = (int)round($interval * $easeFactor);
-            }
-            $repetitions++;
-            $state = $repetitions >= 2 ? 'review' : 'learning';
-        } else {
-            $repetitions = 0;
-            $interval = 1;
-            $state = 'relearning';
+        switch ($rating) {
+            case self::RATING_EASY:
+                $ease += 20;
+                $newInterval = (($interval + $delayDays) * $ease) / 100.0;
+                $newInterval *= self::EASY_BONUS;
+                break;
+
+            case self::RATING_GOOD:
+                $newInterval = (($interval + $delayDays / 2) * $ease) / 100.0;
+                break;
+
+            case self::RATING_HARD:
+                $ease = max(self::MIN_EASE, $ease - 20);
+                $newInterval = max(1, ($interval + $delayDays / 4) * self::LAPSES_INTERVAL_CHANGE);
+                break;
+
+            case self::RATING_AGAIN:
+            default:
+                $ease = max(self::MIN_EASE, $ease - 20);
+                $newInterval = self::INITIAL_INTERVAL;
+                break;
         }
 
-        // SM-2 ease factor update
-        $easeFactor = $easeFactor + (0.1 - (4 - $rating) * (0.08 + (4 - $rating) * 0.02));
-        if ($easeFactor < self::MIN_EASE_FACTOR) {
-            $easeFactor = self::MIN_EASE_FACTOR;
-        }
+        // Apply maximum interval cap
+        $newInterval = min($newInterval, self::MAXIMUM_INTERVAL);
+
+        // Round to integer (Obsidian uses round(interval * 10) / 10, but we store as int)
+        $newInterval = max(1, (int)round($newInterval));
 
         return [
-            'interval' => $interval,
-            'repetitions' => $repetitions,
-            'easeFactor' => round($easeFactor, 2),
-            'state' => $state,
+            'interval' => $newInterval,
+            'ease' => $ease,
         ];
     }
 
     /**
      * Predict intervals for all possible ratings (for button labels).
      *
+     * @param int $interval  Current interval in days
+     * @param int $ease      Current ease as integer (250=2.5×)
+     * @param int $delayDays Days overdue
      * @return array<int, array{interval: int, label: string}>
      */
-    public function predictIntervals(int $repetitions, int $interval, float $easeFactor): array {
+    public function predictIntervals(int $interval, int $ease, int $delayDays = 0): array {
         $predictions = [];
-        for ($rating = 0; $rating <= 4; $rating++) {
-            $result = $this->calculateNextReview($rating, $repetitions, $interval, $easeFactor);
+        for ($rating = 0; $rating <= 3; $rating++) {
+            $result = $this->calculateNextReview($rating, $interval, $ease, $delayDays);
             $predictions[$rating] = [
                 'interval' => $result['interval'],
-                'label' => $this->formatInterval($result['interval']),
+                'ease' => $result['ease'],
+                'label' => self::formatInterval($result['interval']),
             ];
         }
         return $predictions;
@@ -88,7 +114,7 @@ class SM2Algorithm {
     /**
      * Format interval in days to human-readable string.
      */
-    public function formatInterval(int $days): string {
+    public static function formatInterval(int $days): string {
         if ($days < 1) return '< 1d';
         if ($days === 1) return '1d';
         if ($days < 30) return $days . 'd';
@@ -97,6 +123,6 @@ class SM2Algorithm {
     }
 
     public function isValidRating(int $rating): bool {
-        return $rating >= self::RATING_AGAIN && $rating <= self::RATING_VERY_EASY;
+        return $rating >= self::RATING_AGAIN && $rating <= self::RATING_EASY;
     }
 }
