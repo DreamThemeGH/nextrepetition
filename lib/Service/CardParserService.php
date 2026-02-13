@@ -367,7 +367,7 @@ class CardParserService {
         $lines = explode("\n", $content);
         $hasCard = false;
         $hasSR = false;
-        $cardIsDue = false;
+        $cardDueCount = 0; // count due DIRECTIONS, not just "is card due"
 
         for ($i = 0; $i < count($lines); $i++) {
             $trimmed = trim($lines[$i]);
@@ -378,15 +378,15 @@ class CardParserService {
                 if ($hasCard) {
                     if (!$hasSR) {
                         $new++;
-                    } elseif ($cardIsDue) {
-                        $due++;
+                    } else {
+                        $due += $cardDueCount;
                     }
                 }
                 
                 $total++;
                 $hasCard = true;
                 $hasSR = false;
-                $cardIsDue = false;
+                $cardDueCount = 0;
             }
 
             // Check SR entries
@@ -402,8 +402,7 @@ class CardParserService {
                     }
                     $hasRealEntry = true;
                     if ($entry[1] <= $today) {
-                        $cardIsDue = true;
-                        break; // Card is due if at least one real SR entry is due
+                        $cardDueCount++; // Count each due direction
                     }
                 }
                 // If all entries are dummy, treat as new card
@@ -417,8 +416,8 @@ class CardParserService {
         if ($hasCard) {
             if (!$hasSR) {
                 $new++;
-            } elseif ($cardIsDue) {
-                $due++;
+            } else {
+                $due += $cardDueCount;
             }
         }
 

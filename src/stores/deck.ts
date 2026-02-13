@@ -141,6 +141,13 @@ export const useDeckStore = defineStore('deck', () => {
         }
     }
 
+    function updateDueCount(path: string, dueCount: number) {
+        const deck = decks.value.find(d => d.path === path)
+        if (deck) {
+            deck.dueCards = dueCount
+        }
+    }
+
     return {
         decks,
         folders,
@@ -161,5 +168,6 @@ export const useDeckStore = defineStore('deck', () => {
         createDeck,
         deleteDeck,
         updateCardLocally,
+        updateDueCount,
     }
 })

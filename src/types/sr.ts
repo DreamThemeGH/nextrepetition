@@ -32,6 +32,7 @@ export const RATING_COLORS: Record<Rating, string> = {
 export interface ReviewResult {
     sr: SREntry[]
     cardIndex: number
+    remainingDue?: number
 }
 
 export interface IntervalPrediction {

@@ -88,6 +88,8 @@ class BufferService {
 
     /**
      * Get due cards from an open deck.
+     * Each card gets 'dueDirections' array (e.g. [0], [1], or [0,1])
+     * indicating which SR entry indices are due.
      */
     public function getDueCards(string $userId, string $filePath): array {
         $cards = $this->getCards($userId, $filePath);
@@ -101,7 +103,25 @@ class BufferService {
         $due = [];
 
         foreach ($cards as $card) {
-            if ($card['state'] === 'new' || $card['state'] === 'due') {
+            if ($card['state'] === 'new') {
+                $card['dueDirections'] = [0]; // New cards start with front→back
+                $due[] = $card;
+                continue;
+            }
+            if ($card['state'] === 'due') {
+                // Determine WHICH directions are actually due
+                $dueDirections = [];
+                if (isset($card['sr']) && is_array($card['sr'])) {
+                    foreach ($card['sr'] as $idx => $sr) {
+                        if (isset($sr['date']) && $sr['date'] !== '2000-01-01' && $sr['date'] <= $today) {
+                            $dueDirections[] = $idx;
+                        }
+                    }
+                }
+                if (empty($dueDirections)) {
+                    $dueDirections = [0];
+                }
+                $card['dueDirections'] = $dueDirections;
                 $due[] = $card;
             }
         }

@@ -20,6 +20,7 @@ use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\DataResponse;
 use OCP\AppFramework\OCSController;
 use OCP\IRequest;
+use Psr\Log\LoggerInterface;
 
 class ReviewController extends OCSController {
 
@@ -28,6 +29,7 @@ class ReviewController extends OCSController {
         private BufferService $bufferService,
         private SM2Service $sm2Service,
         private ?string $userId,
+        private LoggerInterface $logger,
     ) {
         parent::__construct(Application::APP_ID, $request);
     }
@@ -103,9 +105,27 @@ class ReviewController extends OCSController {
         $saveResult = $this->bufferService->save($this->userId, $path);
         $this->logger->error('[REVIEW] After save()', ['saveResult' => $saveResult]);
 
+        // Count remaining due directions in the buffer
+        // Each due direction counts as 1 (a card with 2 due directions = 2)
+        $remainingDue = 0;
+        $today = date('Y-m-d');
+        $allCards = $this->bufferService->getCards($this->userId, $path);
+        if ($allCards !== null) {
+            foreach ($allCards as $c) {
+                if (isset($c['sr']) && is_array($c['sr'])) {
+                    foreach ($c['sr'] as $sr) {
+                        if (isset($sr['date']) && $sr['date'] !== '2000-01-01' && $sr['date'] <= $today) {
+                            $remainingDue++;
+                        }
+                    }
+                }
+            }
+        }
+
         return new DataResponse([
             'sr' => $newSR,
             'cardIndex' => $cardIndex,
+            'remainingDue' => $remainingDue,
         ]);
     }
 
