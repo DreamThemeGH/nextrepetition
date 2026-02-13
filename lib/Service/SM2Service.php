@@ -121,4 +121,3 @@ class SM2Service {
         return $predictions;
     }
 }
-}
