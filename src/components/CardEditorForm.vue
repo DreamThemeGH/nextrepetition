@@ -4,23 +4,23 @@
             <div class="form-group">
                 <label>{{ t('flashcards', 'Front') }}</label>
                 <NcTextField
-                    :value="front"
+                    :model-value="front ?? ''"
                     :placeholder="t('flashcards', 'Word or phrase')"
-                    @update:value="$emit('update:front', $event)" />
+                    @update:model-value="$emit('update:front', String($event))" />
             </div>
             <div class="form-group">
                 <label>{{ t('flashcards', 'Back') }}</label>
                 <NcTextField
-                    :value="back"
+                    :model-value="back ?? ''"
                     :placeholder="t('flashcards', 'Translation')"
-                    @update:value="$emit('update:back', $event)" />
+                    @update:model-value="$emit('update:back', String($event))" />
             </div>
             <div class="form-group">
                 <label>{{ t('flashcards', 'Transcription (optional)') }}</label>
                 <NcTextField
-                    :value="transcription"
+                    :model-value="transcription ?? ''"
                     placeholder="IPA"
-                    @update:value="$emit('update:transcription', $event)" />
+                    @update:model-value="$emit('update:transcription', String($event))" />
             </div>
         </template>
 
@@ -28,16 +28,16 @@
             <div class="form-group">
                 <label>{{ t('flashcards', 'Sentence with ==cloze==') }}</label>
                 <NcTextField
-                    :value="sentence"
+                    :model-value="sentence ?? ''"
                     :placeholder="t('flashcards', 'I ==like==^[люблю] pizza')"
-                    @update:value="$emit('update:sentence', $event)" />
+                    @update:model-value="$emit('update:sentence', String($event))" />
             </div>
             <div class="form-group">
                 <label>{{ t('flashcards', 'Translation') }}</label>
                 <NcTextField
-                    :value="translation"
+                    :model-value="translation ?? ''"
                     :placeholder="t('flashcards', 'Я люблю пиццу')"
-                    @update:value="$emit('update:translation', $event)" />
+                    @update:model-value="$emit('update:translation', String($event))" />
             </div>
         </template>
     </div>
