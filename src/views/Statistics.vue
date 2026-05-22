@@ -153,10 +153,11 @@ const intervalChartData = computed(() => {
         return { labels: [], datasets: [] }
     }
     const dist = deckStatsData.value.intervalDistribution
+    const values = Object.values(dist) as number[]
     return {
         labels: Object.keys(dist).map(k => `${k}d`),
         datasets: [{
-            data: Object.values(dist),
+            data: values,
             backgroundColor: 'rgba(25, 113, 194, 0.6)',
             hoverBackgroundColor: 'rgba(25, 113, 194, 0.85)',
             borderRadius: 6,
