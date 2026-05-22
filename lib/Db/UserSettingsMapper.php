@@ -27,6 +27,10 @@ class UserSettingsMapper extends QBMapper {
      */
     protected function mapRowToEntity(array $row): UserSettings {
         $entity = new UserSettings();
+
+        if (isset($row['id'])) {
+            $entity->setId((int)$row['id']);
+        }
         
         // Map v1 columns: global_settings -> globalSettings
         if (isset($row['user_id'])) {
