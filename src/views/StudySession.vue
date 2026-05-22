@@ -481,8 +481,10 @@ async function speakCard() {
     }
 }
 
-function goBack() {
-    // Navigate back to deck browser - the deck store will keep the current deck highlighted
+async function goBack() {
+    // Persist in-memory SR updates before returning to deck list
+    await deckStore.saveDeck()
+    await deckStore.loadDecks()
     router.push({ name: 'decks' })
 }
 
