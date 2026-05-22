@@ -391,22 +391,21 @@ function openEditCardDialog() {
     const card = studyStore.currentCard
     if (!card) return
 
-    editCard.value = card
-
     if (isBasicCard(card)) {
         editFront.value = card.front
         editBack.value = card.back
         editTranscription.value = card.transcription ?? ''
         editSentence.value = ''
         editTranslation.value = ''
-        return
+    } else {
+        editSentence.value = card.sentence
+        editTranslation.value = card.translation ?? ''
+        editFront.value = ''
+        editBack.value = ''
+        editTranscription.value = ''
     }
 
-    editSentence.value = card.sentence
-    editTranslation.value = card.translation ?? ''
-    editFront.value = ''
-    editBack.value = ''
-    editTranscription.value = ''
+    editCard.value = card
 }
 
 function closeEditDialog() {
