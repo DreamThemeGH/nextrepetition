@@ -79,9 +79,7 @@ class SettingsController extends OCSController {
             return new DataResponse(['error' => 'No valid settings provided'], Http::STATUS_BAD_REQUEST);
         }
 
-        $entity = $this->settingsMapper->getOrCreate($this->userId);
-        $entity->updateSettings($updates);
-        $this->settingsMapper->update($entity);
+        $entity = $this->settingsMapper->saveForUser($this->userId, $updates);
 
         return new DataResponse($entity->getParsedSettings());
     }
