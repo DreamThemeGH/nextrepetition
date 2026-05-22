@@ -44,11 +44,28 @@ export const useDeckStore = defineStore('deck', () => {
         decks.value.find(d => d.path === currentPath.value) ?? null,
     )
 
+    function toSafeNumber(value: unknown): number {
+        const n = Number(value)
+        return Number.isFinite(n) ? n : 0
+    }
+
+    function normalizeDeck(deck: DeckMeta): DeckMeta {
+        return {
+            ...deck,
+            size: toSafeNumber(deck.size),
+            modified: toSafeNumber(deck.modified),
+            totalCards: toSafeNumber(deck.totalCards),
+            dueCards: toSafeNumber(deck.dueCards),
+            newCards: toSafeNumber(deck.newCards),
+        }
+    }
+
     async function loadDecks() {
         loading.value = true
         error.value = null
         try {
-            decks.value = await api.fetchDecks()
+            const fetched = await api.fetchDecks()
+            decks.value = fetched.map(normalizeDeck)
         } catch (e) {
             error.value = e instanceof Error ? e.message : 'Failed to load decks'
             showError(error.value)
@@ -144,7 +161,7 @@ export const useDeckStore = defineStore('deck', () => {
     function updateDueCount(path: string, dueCount: number) {
         const deck = decks.value.find(d => d.path === path)
         if (deck) {
-            deck.dueCards = dueCount
+            deck.dueCards = toSafeNumber(dueCount)
         }
     }
 

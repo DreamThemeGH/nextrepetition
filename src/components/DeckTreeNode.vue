@@ -34,9 +34,10 @@
             <!-- Line 2: Stats (left) + Actions (right) -->
             <div class="deck-footer">
                 <div class="deck-stats">
-                    <span class="stat-total">{{ node.deck?.totalCards ?? 0 }}</span>
-                    <span v-if="hasDue" class="stat-due">{{ node.deck?.dueCards ?? 0 }} due</span>
-                    <span v-if="hasNew" class="stat-new">+{{ node.deck?.newCards ?? 0 }} new</span>
+                    <span class="stat-study">{{ studyCount }} {{ t('flashcards', 'to study') }}</span>
+                    <span class="stat-total">{{ totalCount }} {{ t('flashcards', 'total') }}</span>
+                    <span v-if="hasDue" class="stat-due">{{ dueCount }} {{ t('flashcards', 'due') }}</span>
+                    <span v-if="hasNew" class="stat-new">+{{ newCount }} {{ t('flashcards', 'new') }}</span>
                 </div>
 
                 <div class="deck-actions">
@@ -113,8 +114,17 @@ defineEmits<{
 
 const expanded = ref(true)  // Folders expanded by default
 
-const hasDue = computed(() => (props.node.deck?.dueCards ?? 0) > 0)
-const hasNew = computed(() => (props.node.deck?.newCards ?? 0) > 0)
+function num(value: unknown): number {
+    const n = Number(value)
+    return Number.isFinite(n) ? n : 0
+}
+
+const totalCount = computed(() => num(props.node.deck?.totalCards))
+const dueCount = computed(() => num(props.node.deck?.dueCards))
+const newCount = computed(() => num(props.node.deck?.newCards))
+const studyCount = computed(() => dueCount.value + newCount.value)
+const hasDue = computed(() => dueCount.value > 0)
+const hasNew = computed(() => newCount.value > 0)
 const isFavorite = computed(() => {
     const path = props.node.deck?.path
     return !!path && settingsStore.settings.favoriteDecks.includes(path)
@@ -128,7 +138,7 @@ const folderDueCount = computed(() => {
 
 function countDue(node: TreeNode): number {
     let count = 0
-    if (node.deck) count += node.deck.dueCards || 0
+    if (node.deck) count += num(node.deck.dueCards)
     for (const child of node.children) {
         count += countDue(child)
     }
@@ -242,6 +252,11 @@ async function toggleFavorite() {
 .stat-total {
     color: #e0e0e0;
     font-weight: 500;
+}
+
+.stat-study {
+    color: #f5f5f5;
+    font-weight: 700;
 }
 
 .stat-due {
