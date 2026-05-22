@@ -412,7 +412,6 @@ class CardParserService {
         $lines = explode("\n", $content);
         $hasCard = false;
         $hasSR = false;
-        $cardDueCount = 0;
         $cardSRCount = 0; // Total SR entries for this card
 
         for ($i = 0; $i < count($lines); $i++) {
@@ -423,38 +422,29 @@ class CardParserService {
                 // Finalize previous card
                 if ($hasCard) {
                     if (!$hasSR) {
-                        $new++;
                         $total++;
                     } else {
                         // For multi-direction cards: count SR entries as separate cards
                         $total += $cardSRCount;
-                        $due += $cardDueCount;
                     }
                 }
                 
                 $hasCard = true;
                 $hasSR = false;
-                $cardDueCount = 0;
                 $cardSRCount = 0;
             } elseif (preg_match(self::CLOZE_REGEX, $trimmed)) {
                 // Finalize previous card
                 if ($hasCard) {
                     if (!$hasSR) {
-                        $new++;
                         $total++;
                     } else {
                         // For multi-cloze: count SR entries as separate cards
                         $total += $cardSRCount;
-                        $due += $cardDueCount;
                     }
                 }
                 
-                // For cloze: count number of ==word== patterns
-                $clozeCount = preg_match_all(self::CLOZE_REGEX, $trimmed);
-                
                 $hasCard = true;
                 $hasSR = false;
-                $cardDueCount = 0;
                 $cardSRCount = 0;
             }
 
@@ -466,15 +456,12 @@ class CardParserService {
 
                 $cardSRCount = count($entries);
                 $hasRealEntry = false;
-                
+
                 foreach ($entries as $entry) {
                     if ($entry[1] === '2000-01-01') {
                         continue; // Skip dummy date for unreviewed direction
                     }
                     $hasRealEntry = true;
-                    if ($entry[1] <= $today) {
-                        $cardDueCount++; // Count each due direction
-                    }
                 }
                 
                 // If all entries are dummy, treat as new card
@@ -487,12 +474,40 @@ class CardParserService {
         // Finalize last card
         if ($hasCard) {
             if (!$hasSR) {
-                $new++;
                 $total++;
             } else {
                 $total += $cardSRCount;
-                $due += $cardDueCount;
             }
+        }
+
+        // Keep deck-list due/new counters aligned with real study queue logic.
+        // This mirrors BufferService::getDueCards direction handling.
+        $parsed = $this->parse($content);
+        foreach ($parsed['cards'] as $card) {
+            if (($card['state'] ?? '') === 'new') {
+                $new++;
+                continue;
+            }
+
+            if (($card['state'] ?? '') !== 'due') {
+                continue;
+            }
+
+            $dueDirections = 0;
+            if (isset($card['sr']) && is_array($card['sr'])) {
+                foreach ($card['sr'] as $sr) {
+                    if (isset($sr['date']) && $sr['date'] !== '2000-01-01' && $sr['date'] <= $today) {
+                        $dueDirections++;
+                    }
+                }
+            }
+
+            // Fallback parity with BufferService for edge cases.
+            if ($dueDirections === 0) {
+                $dueDirections = 1;
+            }
+
+            $due += $dueDirections;
         }
 
         return [
