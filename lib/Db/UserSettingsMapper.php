@@ -87,11 +87,12 @@ class UserSettingsMapper extends QBMapper {
     public function saveForUser(string $userId, array $updates): UserSettings {
         $entity = $this->getOrCreate($userId);
         $entity->updateSettings($updates);
+        $updatedAtSql = date('Y-m-d H:i:s', $entity->getUpdatedAt());
 
         $qb = $this->db->getQueryBuilder();
         $qb->update($this->getTableName())
             ->set('global_settings', $qb->createNamedParameter($entity->getGlobalSettings(), IQueryBuilder::PARAM_STR))
-            ->set('updated_at', $qb->createNamedParameter($entity->getUpdatedAt(), IQueryBuilder::PARAM_INT))
+            ->set('updated_at', $qb->createNamedParameter($updatedAtSql, IQueryBuilder::PARAM_STR))
             ->where($qb->expr()->eq('user_id', $qb->createNamedParameter($userId, IQueryBuilder::PARAM_STR)));
 
         $updated = $qb->executeStatement();
