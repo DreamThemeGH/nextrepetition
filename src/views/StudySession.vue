@@ -14,7 +14,7 @@
         <div v-else-if="studyStore.queue.length === 0 && !studyStore.loading" class="study-empty">
             <h2>🎉 {{ t('flashcards', 'No cards to review!') }}</h2>
             <p>{{ t('flashcards', 'All cards in this deck are up to date.') }}</p>
-            <NcButton type="primary" @click="goBack">
+            <NcButton variant="primary" @click="goBack">
                 {{ t('flashcards', 'Back to decks') }}
             </NcButton>
         </div>
@@ -38,7 +38,7 @@
             </div>
             <div class="session-actions">
                 <NcButton @click="goBack">{{ t('flashcards', 'Back to decks') }}</NcButton>
-                <NcButton type="primary" @click="restartSession">
+                <NcButton variant="primary" @click="restartSession">
                     {{ t('flashcards', 'Study again') }}
                 </NcButton>
             </div>
@@ -48,7 +48,7 @@
         <div v-else-if="studyStore.currentCard" class="study-active">
             <!-- Back button + deck name header -->
             <div class="study-header">
-                <NcButton type="tertiary"
+                <NcButton variant="tertiary"
                     :aria-label="t('flashcards', 'Back to decks')"
                     @click="goBack"
                     class="back-button">
@@ -75,16 +75,27 @@
             </div>
 
             <!-- Card display -->
-            <div class="card-container"
-                role="button"
-                tabindex="0"
-                :aria-label="studyStore.isFlipped ? t('flashcards', 'Flashcard (revealed)') : t('flashcards', 'Tap to reveal')"
-                @click="handleCardClick"
-                @keydown.enter="handleCardClick"
-                @keydown.space.prevent="handleCardClick">
-                <div class="flashcard"
-                    :key="studyStore.currentIndex"
-                    :class="{ flipped: studyStore.isFlipped }">
+            <div class="card-shell">
+                <NcButton
+                    class="edit-card-button"
+                    variant="tertiary"
+                    :aria-label="t('flashcards', 'Edit card')"
+                    @click.stop="openEditCardDialog">
+                    <template #icon>
+                        <IconPencil :size="18" />
+                    </template>
+                </NcButton>
+
+                <div class="card-container"
+                    role="button"
+                    tabindex="0"
+                    :aria-label="studyStore.isFlipped ? t('flashcards', 'Flashcard (revealed)') : t('flashcards', 'Tap to reveal')"
+                    @click="handleCardClick"
+                    @keydown.enter="handleCardClick"
+                    @keydown.space.prevent="handleCardClick">
+                    <div class="flashcard"
+                        :key="studyStore.currentIndex"
+                        :class="{ flipped: studyStore.isFlipped }">
                     <!-- Front -->
                     <div class="card-face card-front">
                         <div class="card-content">
@@ -160,6 +171,30 @@
                 </div>
             </div>
 
+            <NcDialog
+                v-if="editCard !== null"
+                :name="t('flashcards', 'Edit card')"
+                @closing="closeEditDialog">
+                <CardEditorForm
+                    :type="editCard.type"
+                    :front="editFront"
+                    :back="editBack"
+                    :transcription="editTranscription"
+                    :sentence="editSentence"
+                    :translation="editTranslation"
+                    @update:front="v => editFront = v"
+                    @update:back="v => editBack = v"
+                    @update:transcription="v => editTranscription = v"
+                    @update:sentence="v => editSentence = v"
+                    @update:translation="v => editTranslation = v" />
+                <template #actions>
+                    <NcButton @click="closeEditDialog">{{ t('flashcards', 'Cancel') }}</NcButton>
+                    <NcButton variant="primary" @click="saveEditedCard" :disabled="!canSaveEdit">
+                        {{ t('flashcards', 'Save') }}
+                    </NcButton>
+                </template>
+            </NcDialog>
+
             <!-- Study controls -->
             <div class="study-controls">
                 <!-- Reverse direction button (basic cards only) -->
@@ -215,25 +250,30 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, onUnmounted, watch, computed } from 'vue'
+import { onMounted, onUnmounted, watch, computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { translate as t } from '@nextcloud/l10n'
+import { showError, showSuccess } from '@nextcloud/dialogs'
 
 import NcButton from '@nextcloud/vue/components/NcButton'
+import NcDialog from '@nextcloud/vue/components/NcDialog'
 import NcLoadingIcon from '@nextcloud/vue/components/NcLoadingIcon'
 import IconVolume from 'vue-material-design-icons/VolumeHigh.vue'
 import IconSwap from 'vue-material-design-icons/SwapHorizontal.vue'
 import IconArrowLeft from 'vue-material-design-icons/ArrowLeft.vue'
+import IconPencil from 'vue-material-design-icons/PencilOutline.vue'
 
+import CardEditorForm from '@/components/CardEditorForm.vue'
 import { useStudyStore } from '@/stores/study'
 import { useSettingsStore } from '@/stores/settings'
 import { useDeckStore } from '@/stores/deck'
 import { useTTS } from '@/composables/useTTS'
 import { useKeyboard } from '@/composables/useKeyboard'
+import * as api from '@/services/api'
 import { isBasicCard, isClozeCard } from '@/types/card'
 import type { BasicCard, ClozeCard, ParsedCard } from '@/types/card'
 import type { Rating } from '@/types/sr'
-import { RATING_LABELS, RATING_COLORS } from '@/types/sr'
+import { RATING_COLORS } from '@/types/sr'
 
 const props = defineProps<{ path: string }>()
 const route = useRoute()
@@ -246,6 +286,12 @@ const tts = useTTS()
 const cardLayout = computed(() => settingsStore.get('cardLayout') || 'classic')
 const fullscreenMode = computed(() => settingsStore.get('fullscreenMode') === true)
 const buttonPosition = computed(() => settingsStore.get('buttonPosition') || 'bottom')
+const editCard = ref<ParsedCard | null>(null)
+const editFront = ref('')
+const editBack = ref('')
+const editTranscription = ref('')
+const editSentence = ref('')
+const editTranslation = ref('')
 
 const currentDeckName = computed(() => {
     const deck = deckStore.currentDeck
@@ -266,6 +312,14 @@ const ratings = [
 ]
 
 const againRating = { value: 0 as Rating, label: t('flashcards', 'Again'), color: RATING_COLORS[0] }
+const canSaveEdit = computed(() => {
+    if (!editCard.value) return false
+    if (editCard.value.type === 'basic') {
+        return editFront.value.trim().length > 0 && editBack.value.trim().length > 0
+    }
+
+    return editSentence.value.trim().length > 0 && editSentence.value.includes('==')
+})
 
 function isBasic(card: ParsedCard): card is BasicCard {
     return isBasicCard(card)
@@ -276,13 +330,16 @@ function isCloze(card: ParsedCard): card is ClozeCard {
 }
 
 function renderCloze(card: ClozeCard, showAnswer: boolean): string {
-    // Build HTML from the clozes array — no need to re-parse the sentence
-    // Split the raw sentence around cloze patterns, escape non-cloze parts
+    // Build HTML from the clozes array
+    // For multi-cloze: show ONLY the current clozeIndex as blank, others as revealed+highlighted
     const clozePattern = /==([^=]+)==(?:\^\[([^\]]*)\])?/g
     const parts: string[] = []
     let lastIndex = 0
     let clozeIdx = 0
     let match: RegExpExecArray | null
+
+    // Which cloze is being tested? (from card.clozeIndex, default 0)
+    const currentClozeIndex = card.clozeIndex ?? 0
 
     while ((match = clozePattern.exec(card.sentence)) !== null) {
         // Text before this cloze — escape it
@@ -291,13 +348,20 @@ function renderCloze(card: ClozeCard, showAnswer: boolean): string {
         }
 
         const cloze = card.clozes[clozeIdx] ?? { word: match[1], hint: match[2] || '' }
-        if (showAnswer) {
-            parts.push(`<span class="cloze-revealed">${escapeHtml(cloze.word)}</span>`)
+        
+        // If this is the CURRENT cloze being tested
+        if (clozeIdx === currentClozeIndex) {
+            if (showAnswer) {
+                parts.push(`<span class="cloze-revealed">${escapeHtml(cloze.word)}</span>`)
+            } else {
+                const hint = cloze.hint
+                    ? `<span class="cloze-hint">[${clozeIdx + 1}] ${escapeHtml(cloze.hint)}</span>`
+                    : `<span class="cloze-hint">[${clozeIdx + 1}]</span>`
+                parts.push(`<span class="cloze-blank">${hint}</span>`)
+            }
         } else {
-            const hint = cloze.hint
-                ? `<span class="cloze-hint">${escapeHtml(cloze.hint)}</span>`
-                : '...'
-            parts.push(`<span class="cloze-blank">[${hint}]</span>`)
+            // Other clozes: show revealed and highlighted (studying context)
+            parts.push(`<span class="cloze-other">${escapeHtml(cloze.word)}</span>`)
         }
 
         lastIndex = match.index + match[0].length
@@ -319,6 +383,80 @@ function escapeHtml(text: string): string {
 function handleCardClick() {
     if (!studyStore.isFlipped) {
         studyStore.flipCard()
+    }
+}
+
+function openEditCardDialog() {
+    const card = studyStore.currentCard
+    if (!card) return
+
+    editCard.value = card
+
+    if (isBasicCard(card)) {
+        editFront.value = card.front
+        editBack.value = card.back
+        editTranscription.value = card.transcription ?? ''
+        editSentence.value = ''
+        editTranslation.value = ''
+        return
+    }
+
+    editSentence.value = card.sentence
+    editTranslation.value = card.translation ?? ''
+    editFront.value = ''
+    editBack.value = ''
+    editTranscription.value = ''
+}
+
+function closeEditDialog() {
+    editCard.value = null
+}
+
+function updateQueuedCard(updatedCard: ParsedCard) {
+    for (const queuedCard of studyStore.queue) {
+        if (queuedCard.index === updatedCard.index) {
+            Object.assign(queuedCard, updatedCard)
+        }
+    }
+
+    deckStore.updateCardLocally(updatedCard.index, updatedCard)
+}
+
+async function saveEditedCard() {
+    if (!editCard.value || !deckStore.currentPath) return
+
+    try {
+        const data: Record<string, string> = {}
+
+        if (editCard.value.type === 'basic') {
+            data.type = 'basic'
+            data.front = editFront.value
+            data.back = editBack.value
+            if (editTranscription.value.trim()) {
+                data.transcription = editTranscription.value
+            }
+        } else {
+            data.type = 'cloze'
+            data.sentence = editSentence.value
+            if (editTranslation.value.trim()) {
+                data.translation = editTranslation.value
+            }
+        }
+
+        await api.updateCard(deckStore.currentPath, editCard.value.index, data)
+        await deckStore.saveDeck()
+        await deckStore.openDeck(deckStore.currentPath)
+
+        const updatedCard = deckStore.currentCards.find(card => card.index === editCard.value?.index)
+        if (updatedCard) {
+            updateQueuedCard(updatedCard)
+        }
+
+        await deckStore.loadDecks()
+        closeEditDialog()
+        showSuccess(t('flashcards', 'Card updated'))
+    } catch (e) {
+        showError(e instanceof Error ? e.message : t('flashcards', 'Failed to update card'))
     }
 }
 
@@ -486,12 +624,31 @@ onUnmounted(() => {
     white-space: nowrap;
 }
 
+.card-shell {
+    position: relative;
+    width: 100%;
+}
+
 .card-container {
     width: 100%;
     min-height: $card-min-height;
     perspective: 1000px;
     cursor: pointer;
     margin-bottom: 20px;
+}
+
+.edit-card-button {
+    position: absolute;
+    top: -18px;
+    right: 12px;
+    z-index: 2;
+    min-width: 34px !important;
+    min-height: 34px !important;
+    padding: 0 !important;
+    border-radius: 999px !important;
+    color: var(--color-text-maxcontrast) !important;
+    background: var(--color-main-background) !important;
+    border: 1px solid var(--color-border) !important;
 }
 
 .flashcard {
@@ -623,6 +780,14 @@ onUnmounted(() => {
     font-weight: 700;
     color: var(--color-primary);
     text-decoration: underline;
+}
+
+:deep(.cloze-other) {
+    font-weight: 600;
+    color: var(--color-primary-element);
+    background: color-mix(in srgb, var(--color-primary) 15%, transparent);
+    padding: 2px 6px;
+    border-radius: 4px;
 }
 
 .study-controls {

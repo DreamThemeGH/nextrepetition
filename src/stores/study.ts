@@ -12,9 +12,11 @@ import type { ParsedCard } from '@/types/card'
 import type { Rating, IntervalPrediction } from '@/types/sr'
 import * as api from '@/services/api'
 import { useDeckStore } from './deck'
+import { useSettingsStore } from './settings'
 
 export const useStudyStore = defineStore('study', () => {
     const deckStore = useDeckStore()
+    const settingsStore = useSettingsStore()
 
     const queue = ref<ParsedCard[]>([])
     const currentIndex = ref(0)
@@ -50,6 +52,8 @@ export const useStudyStore = defineStore('study', () => {
             if (deckStore.currentPath !== path) {
                 await deckStore.openDeck(path)
             }
+
+            void settingsStore.touchRecentDeck(path)
 
             const dueCards = await api.fetchDueCards(path)
 

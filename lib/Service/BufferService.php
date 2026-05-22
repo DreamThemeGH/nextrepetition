@@ -344,6 +344,34 @@ class BufferService {
         return true;
     }
 
+    public function resetProgress(string $userId, string $filePath): bool {
+        $buffer = $this->getBuffer($userId, $filePath);
+
+        if ($buffer === null) {
+            $parseResult = $this->openDeck($userId, $filePath);
+            $buffer = $this->getBuffer($userId, $filePath);
+            if ($buffer === null) {
+                $buffer = [
+                    'userId' => $userId,
+                    'filePath' => $filePath,
+                    'parseResult' => $parseResult,
+                    'dirty' => false,
+                    'openedAt' => time(),
+                    'lastSaved' => time(),
+                ];
+            }
+        }
+
+        $content = $this->serializer->clearSRMetadata($buffer['parseResult']);
+        $buffer['parseResult'] = $this->parser->parse($content, $filePath);
+        $buffer['dirty'] = true;
+
+        $bufferKey = $this->bufferKey($userId, $filePath);
+        $this->cache->set($bufferKey, json_encode($buffer), self::CACHE_TTL);
+
+        return $this->save($userId, $filePath);
+    }
+
     /**
      * Generate cache key for a user+file combination.
      */

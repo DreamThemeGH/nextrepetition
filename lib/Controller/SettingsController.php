@@ -67,6 +67,8 @@ class SettingsController extends OCSController {
                     $updates[$key] = filter_var($value, FILTER_VALIDATE_BOOLEAN);
                 } elseif (is_int($default)) {
                     $updates[$key] = (int)$value;
+                } elseif (is_array($default)) {
+                    $updates[$key] = is_array($value) ? $value : [];
                 } else {
                     $updates[$key] = (string)$value;
                 }

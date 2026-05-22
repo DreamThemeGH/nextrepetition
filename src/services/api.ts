@@ -84,6 +84,10 @@ export async function deleteDeck(path: string): Promise<void> {
     await axios.delete(url('/decks'), { headers: HEADERS, params: { path } })
 }
 
+export async function resetDeckProgress(path: string): Promise<void> {
+    await axios.post(url('/decks/reset-progress'), { path }, { headers: HEADERS })
+}
+
 export async function fetchFolders(subPath?: string): Promise<FolderInfo[]> {
     const resp = await axios.get(url('/decks/folders'), {
         headers: HEADERS,

@@ -1,7 +1,7 @@
 <template>
     <div class="folder-tree-selector">
         <div class="folder-tree-header">
-            <NcButton type="tertiary-no-background"
+            <NcButton variant="tertiary-no-background"
                 @click="refreshTree"
                 :disabled="loading">
                 <template #icon>

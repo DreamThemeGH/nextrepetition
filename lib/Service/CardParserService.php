@@ -127,16 +127,47 @@ class CardParserService {
             // Check for SR metadata
             if (preg_match(self::SR_REGEX, $trimmed, $srMatch)) {
                 if ($currentCard !== null) {
-                    $currentCard['sr'] = $this->parseSREntries($srMatch[1]);
-                    $currentCard['srRaw'] = $srMatch[0];
-                    $currentCard['srLine'] = $i;
+                    $srEntries = $this->parseSREntries($srMatch[1]);
+                    
                     // Flush context
                     if (!empty($contextLines)) {
                         $currentCard['context'][] = $contextLines;
                         $contextLines = [];
                     }
-                    // Finalize and store this card
-                    $result['cards'][] = $this->finalizeCard($currentCard);
+                    
+                    // For multi-cloze cards: create N cards (one per cloze)
+                    if ($currentCard['type'] === 'cloze' && count($currentCard['clozes']) > 1) {
+                        foreach ($currentCard['clozes'] as $clozeIndex => $cloze) {
+                            $multiCard = $currentCard;
+                            $multiCard['clozeIndex'] = $clozeIndex; // Which cloze is hidden
+                            $multiCard['totalClozes'] = count($currentCard['clozes']);
+                            
+                            // Assign SR data for this specific cloze direction
+                            if (isset($srEntries[$clozeIndex])) {
+                                $multiCard['sr'] = [$srEntries[$clozeIndex]];
+                            } else {
+                                $multiCard['sr'] = [];
+                            }
+                            
+                            $multiCard['srRaw'] = $srMatch[0];
+                            $multiCard['srLine'] = $i;
+                            
+                            $result['cards'][] = $this->finalizeCard($multiCard);
+                        }
+                    } else {
+                        // Single cloze or basic card
+                        $currentCard['sr'] = $srEntries;
+                        $currentCard['srRaw'] = $srMatch[0];
+                        $currentCard['srLine'] = $i;
+                        
+                        if ($currentCard['type'] === 'cloze') {
+                            $currentCard['clozeIndex'] = 0;
+                            $currentCard['totalClozes'] = 1;
+                        }
+                        
+                        $result['cards'][] = $this->finalizeCard($currentCard);
+                    }
+                    
                     $currentCard = null;
                 }
                 continue;
@@ -152,6 +183,13 @@ class CardParserService {
                         $currentCard['context'][] = $contextLines;
                         $contextLines = [];
                     }
+                    
+                    // If cloze card without SR, treat as single cloze (new card)
+                    if ($currentCard['type'] === 'cloze') {
+                        $currentCard['clozeIndex'] = 0;
+                        $currentCard['totalClozes'] = count($currentCard['clozes']);
+                    }
+                    
                     $result['cards'][] = $this->finalizeCard($currentCard);
                 }
 
@@ -169,6 +207,13 @@ class CardParserService {
             if (!empty($contextLines)) {
                 $currentCard['context'][] = $contextLines;
             }
+            
+            // If cloze card without SR, treat as single cloze (new card)
+            if ($currentCard['type'] === 'cloze') {
+                $currentCard['clozeIndex'] = 0;
+                $currentCard['totalClozes'] = count($currentCard['clozes']);
+            }
+            
             $result['cards'][] = $this->finalizeCard($currentCard);
         }
 
@@ -367,26 +412,50 @@ class CardParserService {
         $lines = explode("\n", $content);
         $hasCard = false;
         $hasSR = false;
-        $cardDueCount = 0; // count due DIRECTIONS, not just "is card due"
+        $cardDueCount = 0;
+        $cardSRCount = 0; // Total SR entries for this card
 
         for ($i = 0; $i < count($lines); $i++) {
             $trimmed = trim($lines[$i]);
 
-            // Count card definitions
-            if (preg_match(self::BASIC_REGEX, $trimmed) || preg_match(self::CLOZE_REGEX, $trimmed)) {
+            // Count card definitions (basic or cloze)
+            if (preg_match(self::BASIC_REGEX, $trimmed)) {
                 // Finalize previous card
                 if ($hasCard) {
                     if (!$hasSR) {
                         $new++;
+                        $total++;
                     } else {
+                        // For multi-direction cards: count SR entries as separate cards
+                        $total += $cardSRCount;
                         $due += $cardDueCount;
                     }
                 }
                 
-                $total++;
                 $hasCard = true;
                 $hasSR = false;
                 $cardDueCount = 0;
+                $cardSRCount = 0;
+            } elseif (preg_match(self::CLOZE_REGEX, $trimmed)) {
+                // Finalize previous card
+                if ($hasCard) {
+                    if (!$hasSR) {
+                        $new++;
+                        $total++;
+                    } else {
+                        // For multi-cloze: count SR entries as separate cards
+                        $total += $cardSRCount;
+                        $due += $cardDueCount;
+                    }
+                }
+                
+                // For cloze: count number of ==word== patterns
+                $clozeCount = preg_match_all(self::CLOZE_REGEX, $trimmed);
+                
+                $hasCard = true;
+                $hasSR = false;
+                $cardDueCount = 0;
+                $cardSRCount = 0;
             }
 
             // Check SR entries
@@ -395,7 +464,9 @@ class CardParserService {
                 $entries = [];
                 preg_match_all(self::SR_ENTRY_REGEX, $srMatch[1], $entries, PREG_SET_ORDER);
 
+                $cardSRCount = count($entries);
                 $hasRealEntry = false;
+                
                 foreach ($entries as $entry) {
                     if ($entry[1] === '2000-01-01') {
                         continue; // Skip dummy date for unreviewed direction
@@ -405,6 +476,7 @@ class CardParserService {
                         $cardDueCount++; // Count each due direction
                     }
                 }
+                
                 // If all entries are dummy, treat as new card
                 if (!$hasRealEntry) {
                     $hasSR = false;
@@ -416,7 +488,9 @@ class CardParserService {
         if ($hasCard) {
             if (!$hasSR) {
                 $new++;
+                $total++;
             } else {
+                $total += $cardSRCount;
                 $due += $cardDueCount;
             }
         }

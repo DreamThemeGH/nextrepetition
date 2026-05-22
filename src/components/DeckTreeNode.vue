@@ -40,8 +40,18 @@
                 </div>
 
                 <div class="deck-actions">
+                    <NcButton
+                        variant="tertiary"
+                        class="favorite-button"
+                        :aria-label="isFavorite ? t('flashcards', 'Remove from favorites') : t('flashcards', 'Add to favorites')"
+                        @click.stop="toggleFavorite">
+                        <template #icon>
+                            <IconStar v-if="isFavorite" :size="18" />
+                            <IconStarOutline v-else :size="18" />
+                        </template>
+                    </NcButton>
                     <NcButton v-if="hasDue || hasNew"
-                        type="primary"
+                        variant="primary"
                         :aria-label="t('flashcards', 'Study')"
                         @click.stop="$emit('study', node.deck!.path)">
                         {{ t('flashcards', 'Study') }}
@@ -50,6 +60,13 @@
                         :aria-label="t('flashcards', 'Browse')"
                         @click.stop="$emit('browse', node.deck!.path)">
                         {{ t('flashcards', 'Browse') }}
+                    </NcButton>
+                    <NcButton
+                        variant="tertiary"
+                        class="reset-button"
+                        :aria-label="t('flashcards', 'Reset progress')"
+                        @click.stop="$emit('reset-progress', node.deck!)">
+                        {{ t('flashcards', 'Reset') }}
                     </NcButton>
                 </div>
             </div>
@@ -64,7 +81,8 @@
                 :node="child"
                 :depth="depth + 1"
                 @study="$emit('study', $event)"
-                @browse="$emit('browse', $event)" />
+                @browse="$emit('browse', $event)"
+                @reset-progress="$emit('reset-progress', $event)" />
         </ul>
     </li>
 </template>
@@ -72,23 +90,35 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { translate as t } from '@nextcloud/l10n'
+import { showError } from '@nextcloud/dialogs'
 import NcButton from '@nextcloud/vue/components/NcButton'
+import IconStar from 'vue-material-design-icons/Star.vue'
+import IconStarOutline from 'vue-material-design-icons/StarOutline.vue'
 import type { TreeNode } from './DeckTree.vue'
+import type { DeckMeta } from '@/types/deck'
+import { useSettingsStore } from '@/stores/settings'
 
 const props = defineProps<{
     node: TreeNode
     depth: number
 }>()
 
+const settingsStore = useSettingsStore()
+
 defineEmits<{
     (e: 'study', path: string): void
     (e: 'browse', path: string): void
+    (e: 'reset-progress', deck: DeckMeta): void
 }>()
 
 const expanded = ref(true)  // Folders expanded by default
 
 const hasDue = computed(() => (props.node.deck?.dueCards ?? 0) > 0)
 const hasNew = computed(() => (props.node.deck?.newCards ?? 0) > 0)
+const isFavorite = computed(() => {
+    const path = props.node.deck?.path
+    return !!path && settingsStore.settings.favoriteDecks.includes(path)
+})
 
 /** Sum due cards in all descendants */
 const folderDueCount = computed(() => {
@@ -103,6 +133,17 @@ function countDue(node: TreeNode): number {
         count += countDue(child)
     }
     return count
+}
+
+async function toggleFavorite() {
+    const path = props.node.deck?.path
+    if (!path) return
+
+    try {
+        await settingsStore.toggleFavoriteDeck(path)
+    } catch (e) {
+        showError(e instanceof Error ? e.message : t('flashcards', 'Failed to update favorites'))
+    }
 }
 </script>
 
@@ -216,6 +257,15 @@ function countDue(node: TreeNode): number {
 .deck-actions {
     display: flex;
     gap: 4px;
+    align-items: center;
+}
+
+.reset-button {
+    color: var(--color-text-maxcontrast);
+}
+
+.favorite-button {
+    color: #c59a1b;
 }
 
 /* Mobile responsive layout */

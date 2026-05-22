@@ -15,7 +15,8 @@
                 :node="node"
                 :depth="0"
                 @study="$emit('study', $event)"
-                @browse="$emit('browse', $event)" />
+                @browse="$emit('browse', $event)"
+                @reset-progress="$emit('reset-progress', $event)" />
         </ul>
     </div>
 </template>
@@ -43,6 +44,7 @@ const props = defineProps<{
 defineEmits<{
     (e: 'study', path: string): void
     (e: 'browse', path: string): void
+    (e: 'reset-progress', deck: DeckMeta): void
 }>()
 
 /**

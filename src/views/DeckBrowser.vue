@@ -3,7 +3,7 @@
         <div class="deck-browser-container">
         <div class="flashcards-page-header">
             <h2>{{ t('flashcards', 'Decks') }}</h2>
-            <NcButton type="primary" @click="showCreate = true">
+            <NcButton variant="primary" @click="showCreate = true">
                 <template #icon><IconPlus :size="20" /></template>
                 {{ t('flashcards', 'New deck') }}
             </NcButton>
@@ -23,7 +23,8 @@
             :decks="deckStore.decks"
             :loading="deckStore.loading"
             @study="startStudy"
-            @browse="browseDeck" />
+            @browse="browseDeck"
+            @reset-progress="confirmResetProgress" />
 
         <!-- Create deck dialog -->
         <NcDialog v-if="showCreate"
@@ -33,17 +34,35 @@
                 <label>{{ t('flashcards', 'Deck name') }}</label>
                 <NcTextField :value="newDeckName"
                     :placeholder="t('flashcards', 'My flashcards')"
-                    @update:value="v => newDeckName = v" />
+                    @update:value="updateNewDeckName" />
 
                 <label>{{ t('flashcards', 'Subfolder (optional)') }}</label>
                 <NcTextField :value="newDeckFolder"
                     :placeholder="t('flashcards', 'e.g. Serbian learning')"
-                    @update:value="v => newDeckFolder = v" />
+                    @update:value="updateNewDeckFolder" />
             </div>
             <template #actions>
                 <NcButton @click="showCreate = false">{{ t('flashcards', 'Cancel') }}</NcButton>
-                <NcButton type="primary" @click="handleCreate" :disabled="!newDeckName.trim()">
+                <NcButton variant="primary" @click="handleCreate" :disabled="!newDeckName.trim()">
                     {{ t('flashcards', 'Create') }}
+                </NcButton>
+            </template>
+        </NcDialog>
+
+        <NcDialog
+            v-if="deckToReset"
+            :name="t('flashcards', 'Reset progress')"
+            @closing="deckToReset = null">
+            <p>
+                {{ t('flashcards', 'Reset all study progress for "{name}"?', { name: deckToReset.name }) }}
+            </p>
+            <p>
+                {{ t('flashcards', 'This will remove all spaced repetition timestamps from the deck file and mark the deck as not started.') }}
+            </p>
+            <template #actions>
+                <NcButton @click="deckToReset = null">{{ t('flashcards', 'Cancel') }}</NcButton>
+                <NcButton variant="error" @click="handleResetProgress">
+                    {{ t('flashcards', 'Reset progress') }}
                 </NcButton>
             </template>
         </NcDialog>
@@ -55,6 +74,7 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { translate as t } from '@nextcloud/l10n'
+import { showError, showSuccess } from '@nextcloud/dialogs'
 
 import NcButton from '@nextcloud/vue/components/NcButton'
 import NcDialog from '@nextcloud/vue/components/NcDialog'
@@ -64,6 +84,8 @@ import IconPlus from 'vue-material-design-icons/Plus.vue'
 
 import DeckTree from '@/components/DeckTree.vue'
 import { useDeckStore } from '@/stores/deck'
+import type { DeckMeta } from '@/types/deck'
+import * as api from '@/services/api'
 
 const router = useRouter()
 const deckStore = useDeckStore()
@@ -71,6 +93,15 @@ const deckStore = useDeckStore()
 const showCreate = ref(false)
 const newDeckName = ref('')
 const newDeckFolder = ref('')
+const deckToReset = ref<DeckMeta | null>(null)
+
+function updateNewDeckName(value: string) {
+    newDeckName.value = value
+}
+
+function updateNewDeckFolder(value: string) {
+    newDeckFolder.value = value
+}
 
 function startStudy(path: string) {
     router.push({ name: 'study', params: { path } })
@@ -78,6 +109,10 @@ function startStudy(path: string) {
 
 function browseDeck(path: string) {
     router.push({ name: 'cards', params: { path } })
+}
+
+function confirmResetProgress(deck: DeckMeta) {
+    deckToReset.value = deck
 }
 
 async function handleCreate() {
@@ -89,6 +124,24 @@ async function handleCreate() {
         newDeckFolder.value = ''
     } catch (e) {
         console.error('Failed to create deck:', e)
+    }
+}
+
+async function handleResetProgress() {
+    if (!deckToReset.value) return
+
+    const path = deckToReset.value.path
+
+    try {
+        await api.resetDeckProgress(path)
+        if (deckStore.currentPath === path) {
+            await deckStore.openDeck(path)
+        }
+        await deckStore.loadDecks()
+        deckToReset.value = null
+        showSuccess(t('flashcards', 'Deck progress reset'))
+    } catch (e) {
+        showError(e instanceof Error ? e.message : t('flashcards', 'Failed to reset deck progress'))
     }
 }
 

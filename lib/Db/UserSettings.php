@@ -46,6 +46,8 @@ class UserSettings extends Entity {
         'ttsVoice' => '',
         'cardsPerDay' => 50,
         'newCardsPerDay' => 20,
+        'favoriteDecks' => [],
+        'recentDecks' => [],
     ];
 
     public function __construct() {

@@ -210,4 +210,21 @@ class DeckController extends OCSController {
         $folders = $this->fileService->listFolders($this->userId, $deckFolder, $subPath);
         return new DataResponse($folders);
     }
+
+    #[NoAdminRequired]
+    public function resetProgress(string $path): DataResponse {
+        if ($this->userId === null) {
+            return new DataResponse(['error' => 'Not authenticated'], Http::STATUS_UNAUTHORIZED);
+        }
+
+        try {
+            $reset = $this->bufferService->resetProgress($this->userId, $path);
+            return new DataResponse(['reset' => $reset]);
+        } catch (\Exception $e) {
+            return new DataResponse(
+                ['error' => 'Failed to reset progress: ' . $e->getMessage()],
+                Http::STATUS_INTERNAL_SERVER_ERROR,
+            );
+        }
+    }
 }

@@ -22,7 +22,7 @@
                         </div>
                         <FolderTreeSelector
                             :model-value="localSettings.deckFolder"
-                            @update:model-value="v => { localSettings.deckFolder = v; markDirty() }" />
+                            @update:model-value="updateDeckFolder" />
                         <p class="setting-help">
                             {{ t('flashcards', 'Select the folder containing your .md flashcard files from the tree above.') }}
                         </p>
@@ -76,21 +76,21 @@
 
                 <div class="setting-row">
                     <NcCheckboxRadioSwitch :model-value="localSettings.showProgress"
-                        @update:model-value="v => { localSettings.showProgress = v; markDirty() }">
+                        @update:model-value="updateShowProgress">
                         {{ t('flashcards', 'Show progress bar') }}
                     </NcCheckboxRadioSwitch>
                 </div>
 
                 <div class="setting-row">
                     <NcCheckboxRadioSwitch :model-value="localSettings.keyboardShortcuts"
-                        @update:model-value="v => { localSettings.keyboardShortcuts = v; markDirty() }">
+                        @update:model-value="updateKeyboardShortcuts">
                         {{ t('flashcards', 'Enable keyboard shortcuts') }}
                     </NcCheckboxRadioSwitch>
                 </div>
 
                 <div class="setting-row">
                     <NcCheckboxRadioSwitch :model-value="localSettings.fullscreenMode"
-                        @update:model-value="v => { localSettings.fullscreenMode = v; markDirty() }">
+                        @update:model-value="updateFullscreenMode">
                         {{ t('flashcards', 'Fullscreen study mode') }}
                     </NcCheckboxRadioSwitch>
                 </div>
@@ -102,7 +102,7 @@
 
                 <div class="setting-row">
                     <NcCheckboxRadioSwitch :model-value="localSettings.autoPlayAudio"
-                        @update:model-value="v => { localSettings.autoPlayAudio = v; markDirty() }">
+                        @update:model-value="updateAutoPlayAudio">
                         {{ t('flashcards', 'Auto-play audio for cards') }}
                     </NcCheckboxRadioSwitch>
                 </div>
@@ -111,20 +111,20 @@
                     <label>{{ t('flashcards', 'Default language') }}</label>
                     <NcTextField :value="localSettings.defaultLanguage"
                         placeholder="en-US"
-                        @update:value="v => { localSettings.defaultLanguage = v; markDirty() }" />
+                        @update:value="updateDefaultLanguage" />
                 </div>
 
                 <div class="setting-row">
                     <label>{{ t('flashcards', 'TTS voice') }}</label>
                     <NcTextField :value="localSettings.ttsVoice"
                         placeholder="en-US-AriaNeural"
-                        @update:value="v => { localSettings.ttsVoice = v; markDirty() }" />
+                        @update:value="updateTtsVoice" />
                 </div>
             </div>
 
             <!-- Save button -->
             <div class="settings-actions">
-                <NcButton type="primary"
+                <NcButton variant="primary"
                     @click="saveSettings"
                     :disabled="!isDirty || settingsStore.loading">
                     {{ t('flashcards', 'Save settings') }}
@@ -168,11 +168,48 @@ const localSettings = reactive<UserSettings>({
     ttsVoice: '',
     cardsPerDay: 50,
     newCardsPerDay: 20,
+    favoriteDecks: [],
+    recentDecks: [],
 })
 
 function markDirty() {
     isDirty.value = true
     saveSuccess.value = false
+}
+
+function updateDeckFolder(value: string) {
+    localSettings.deckFolder = value
+    markDirty()
+}
+
+function updateShowProgress(value: boolean) {
+    localSettings.showProgress = value
+    markDirty()
+}
+
+function updateKeyboardShortcuts(value: boolean) {
+    localSettings.keyboardShortcuts = value
+    markDirty()
+}
+
+function updateFullscreenMode(value: boolean) {
+    localSettings.fullscreenMode = value
+    markDirty()
+}
+
+function updateAutoPlayAudio(value: boolean) {
+    localSettings.autoPlayAudio = value
+    markDirty()
+}
+
+function updateDefaultLanguage(value: string) {
+    localSettings.defaultLanguage = value
+    markDirty()
+}
+
+function updateTtsVoice(value: string) {
+    localSettings.ttsVoice = value
+    markDirty()
 }
 
 async function saveSettings() {

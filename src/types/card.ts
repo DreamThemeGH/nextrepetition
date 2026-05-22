@@ -43,6 +43,8 @@ export interface ClozeCard extends BaseCard {
     sentence: string
     clozes: ClozeItem[]
     translation?: string
+    clozeIndex?: number      // Which cloze is being tested (0-indexed)
+    totalClozes?: number     // Total number of clozes in this sentence
 }
 
 export type ParsedCard = BasicCard | ClozeCard

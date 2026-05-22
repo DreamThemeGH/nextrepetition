@@ -222,6 +222,27 @@ class CardSerializerService {
         return $content;
     }
 
+    public function clearSRMetadata(array $parseResult): string {
+        $lines = [];
+
+        foreach ($parseResult['rawLines'] as $line) {
+            $updatedLine = preg_replace(self::SR_REGEX, '', $line);
+            if ($updatedLine === null) {
+                $updatedLine = $line;
+            }
+
+            if (trim($updatedLine) === '') {
+                if (preg_match(self::SR_REGEX, trim($line)) === 1) {
+                    continue;
+                }
+            }
+
+            $lines[] = rtrim($updatedLine);
+        }
+
+        return implode("\n", $lines);
+    }
+
     /**
      * Update a card's content (front/back text) in the file.
      *

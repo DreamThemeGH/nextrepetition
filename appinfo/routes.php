@@ -19,6 +19,7 @@ return [
         ['name' => 'deck#create',  'url' => '/api/v1/decks',               'verb' => 'POST'],
         ['name' => 'deck#destroy', 'url' => '/api/v1/decks',               'verb' => 'DELETE'],
         ['name' => 'deck#folders', 'url' => '/api/v1/decks/folders',       'verb' => 'GET'],
+        ['name' => 'deck#resetProgress', 'url' => '/api/v1/decks/reset-progress', 'verb' => 'POST'],
 
         // === Cards (from buffer) ===
         ['name' => 'card#index',   'url' => '/api/v1/cards',               'verb' => 'GET'],

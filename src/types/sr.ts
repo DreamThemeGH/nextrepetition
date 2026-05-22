@@ -55,6 +55,13 @@ export interface UserSettings {
     ttsVoice: string
     cardsPerDay: number
     newCardsPerDay: number
+    favoriteDecks: string[]
+    recentDecks: RecentDeckEntry[]
+}
+
+export interface RecentDeckEntry {
+    path: string
+    lastStudied: number
 }
 
 export interface OverviewStats {
