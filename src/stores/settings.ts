@@ -12,7 +12,7 @@ import type { RecentDeckEntry, UserSettings } from '@/types/sr'
 import * as api from '@/services/api'
 
 const DEFAULT_SETTINGS: UserSettings = {
-    deckFolder: '/ObsidianSync',
+    deckFolder: '/StudySync',
     cardLayout: 'classic',
     buttonPosition: 'bottom',
     showProgress: true,

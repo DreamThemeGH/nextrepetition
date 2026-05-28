@@ -33,7 +33,7 @@ class UserSettings extends Entity {
 
     /** Default settings template */
     public const DEFAULTS = [
-        'deckFolder' => '/ObsidianSync',
+        'deckFolder' => '/StudySync',
         'cardLayout' => 'classic',
         'buttonPosition' => 'bottom',
         'showProgress' => true,

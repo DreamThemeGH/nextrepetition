@@ -21,7 +21,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## [2.0.0] – 2026-05-22
 
 ### Added
-- File-based deck storage (`.md` files — Obsidian SR compatible)
+- File-based deck storage (`.md` files — Markdown spaced-repetition compatible)
 - SM-2 spaced repetition algorithm with scheduling written back to `.md`
 - Card formats: Basic (`word:::translation`), Cloze (`==word==^[hint]`), Transcription
 - Auto-save buffer (10-second interval)
@@ -37,7 +37,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 - Initial release of Flashcards v1 (database-backed)
 - SM-2 algorithm with database storage
-- Obsidian Sync folder importer
+- Markdown folder importer
 - Text-to-Speech support
 - Study statistics (heatmap, retention charts)
-- Import/Export: CSV, JSON, Obsidian SR Markdown
+- Import/Export: CSV, JSON, Markdown spaced-repetition format

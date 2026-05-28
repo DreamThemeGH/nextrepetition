@@ -1,6 +1,6 @@
 # Repetio
 
-Repetio is a file-based spaced-repetition flashcard app for Nextcloud. It keeps card content in Markdown files inside your Nextcloud Files, so decks stay portable, versionable, and compatible with Obsidian Spaced Repetition.
+Repetio is a file-based spaced-repetition flashcard app for Nextcloud. It keeps card content in Markdown files inside your Nextcloud Files, so decks stay portable, versionable, and compatible with common Markdown spaced-repetition tools.
 
 ## What it does
 

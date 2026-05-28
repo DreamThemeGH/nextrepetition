@@ -3,7 +3,7 @@
       xsi:noNamespaceSchemaLocation="https://apps.nextcloud.com/schema/apps/info.xsd">
     <id>flashcards</id>
     <name>Repetio — Spaced Repetition Flashcards</name>
-    <summary>Study Markdown flashcards with SM-2 spaced repetition — Obsidian SR compatible</summary>
+    <summary>Study Markdown flashcards with SM-2 spaced repetition</summary>
     <description><![CDATA[
 # Repetio — Spaced Repetition Flashcards
 
@@ -11,11 +11,11 @@ A file-based spaced repetition flashcard app for Nextcloud.
 
 ## Key Principle
 **Your `.md` files are the single source of truth.** Cards, scheduling metadata, and
-translations all live in standard Obsidian Spaced Repetition format Markdown files stored
-in your Nextcloud Files — no database lock-in, works offline with Obsidian.
+translations all live in standard Markdown spaced-repetition files stored in your Nextcloud
+Files — no database lock-in and no vendor-specific card database.
 
 ## Features
-- **File-based storage** — cards stored in `.md` files, fully compatible with Obsidian SR
+- **File-based storage** — cards stored in `.md` files, compatible with Markdown spaced-repetition tools
 - **SM-2 algorithm** — intelligent review scheduling written back into `.md` files
 - **Card formats** — Basic (`word:::translation`), Cloze (`==word==^[hint]`), transcriptions
 - **Auto-save** — changes buffered in memory, flushed to `.md` every 10 seconds

@@ -35,7 +35,7 @@ class DeckFileService {
      * List all .md files (decks) in the user's configured folder.
      *
      * @param string $userId
-     * @param string $deckFolder Relative path within user's files (e.g. "/ObsidianSync")
+    * @param string $deckFolder Relative path within user's files (e.g. "/StudySync")
      * @return array[] Array of deck metadata
      */
     public function listDecks(string $userId, string $deckFolder): array {

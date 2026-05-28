@@ -8,10 +8,10 @@ declare(strict_types=1);
  * Nextcloud Flashcards v2 — SM-2 Service
  *
  * Wraps SM2Algorithm for use with the file-based SR metadata format.
- * Obsidian SR compatible: ease is stored as integer (250=2.5×),
+ * Markdown spaced-repetition compatible: ease is stored as integer (250=2.5×),
  * interval in days, date as YYYY-MM-DD.
  *
- * No "repetitions" counter — Obsidian SR doesn't use it.
+ * No "repetitions" counter — the file format does not use it.
  * delayedBeforeReview is calculated from (today - dueDate).
  */
 

@@ -7,10 +7,10 @@ declare(strict_types=1);
  *
  * Nextcloud Flashcards v2 — Spaced Repetition Algorithm
  *
- * Compatible with Obsidian Spaced Repetition plugin (osrSchedule).
+ * Compatible with Markdown spaced-repetition files using the same schedule fields.
  * Uses the same interval/ease calculations to ensure .md file interoperability.
  *
- * Obsidian SR algorithm (SM-2-OSR variant):
+ * Markdown spaced-repetition scheduling algorithm:
  *   Easy:  ease += 20; interval = (interval + delayDays) * ease / 100 * easyBonus
  *   Good:  interval = (interval + delayDays/2) * ease / 100
  *   Hard:  ease = max(130, ease - 20); interval = max(1, (interval + delayDays/4) * lapsesIntervalChange)
@@ -29,7 +29,7 @@ class SM2Algorithm {
     public const RATING_GOOD = 2;
     public const RATING_EASY = 3;
 
-    // Algorithm constants (match Obsidian SR defaults)
+    // Algorithm constants (match the file format defaults)
     public const DEFAULT_EASE = 250;       // 2.5× multiplier (stored as integer)
     public const MIN_EASE = 130;           // 1.3× minimum (stored as integer)
     public const INITIAL_INTERVAL = 1;     // 1 day for new cards
@@ -38,7 +38,7 @@ class SM2Algorithm {
     public const LAPSES_INTERVAL_CHANGE = 0.5; // Interval reduction for Hard
 
     /**
-     * Calculate the next review schedule (Obsidian SR compatible).
+    * Calculate the next review schedule.
      *
      * @param int   $rating   User rating: 0=Again, 1=Hard, 2=Good, 3=Easy
      * @param int   $interval Current interval in days (from SR tag)
@@ -81,7 +81,7 @@ class SM2Algorithm {
         // Apply maximum interval cap
         $newInterval = min($newInterval, self::MAXIMUM_INTERVAL);
 
-        // Round to integer (Obsidian uses round(interval * 10) / 10, but we store as int)
+        // Round to integer (the file format stores whole days in this app)
         $newInterval = max(1, (int)round($newInterval));
 
         return [

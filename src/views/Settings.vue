@@ -155,7 +155,7 @@ const isDirty = ref(false)
 const saveSuccess = ref(false)
 
 const localSettings = reactive<UserSettings>({
-    deckFolder: '/ObsidianSync',
+    deckFolder: '/StudySync',
     cardLayout: 'classic',
     buttonPosition: 'bottom',
     showProgress: true,

@@ -1,0 +1,13 @@
+{
+    "extends": ["@nextcloud/eslint-config/typescript"],
+    "parserOptions": {
+        "tsconfigRootDir": ".",
+        "project": ["./tsconfig.json"]
+    },
+    "rules": {
+        "n/no-unpublished-import": "off",
+        "indent": ["error", 4, { "SwitchCase": 1 }],
+        "vue/html-indent": ["error", 4],
+        "jsdoc/require-jsdoc": "off"
+    }
+}

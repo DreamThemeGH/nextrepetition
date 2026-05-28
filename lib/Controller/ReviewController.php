@@ -39,7 +39,7 @@ class ReviewController extends OCSController {
      *
      * Expected body:
      * {
-     *   "path": "ObsidianSync/Serbian learning/Popular_word_387_flashcards.md",
+    *   "path": "StudySync/Serbian learning/Popular_word_387_flashcards.md",
      *   "cardIndex": 5,
      *   "rating": 2,       // 0=Again, 1=Hard, 2=Good, 3=Easy
      *   "srIndex": 0       // 0=front→back, 1=back→front (optional, default 0)

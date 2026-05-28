@@ -7,7 +7,7 @@ declare(strict_types=1);
  *
  * Nextcloud Flashcards v2 — Card Parser Service
  *
- * Parses .md files in Obsidian Spaced Repetition format into structured card arrays.
+ * Parses .md files in Markdown spaced-repetition format into structured card arrays.
  * Supports 4 card types from real user data:
  *   1. Basic:  word:::translation
  *   2. Cloze:  sentence with ==word==^[hint]

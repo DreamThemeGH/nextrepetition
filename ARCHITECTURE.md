@@ -4,7 +4,7 @@
 
 **Единственный источник правды — .md файлы в Nextcloud Files.**
 
-- Карточки хранятся ТОЛЬКО в .md файлах формата Obsidian Spaced Repetition
+- Карточки хранятся ТОЛЬКО в .md файлах формата Markdown spaced repetition
 - SM-2 метаданные (`<!--SR:!date,interval,ease-->`) пишутся ОБРАТНО в .md файл
 - БД используется ТОЛЬКО для `user_settings` (настройки интерфейса)
 - Статистика вычисляется при чтении из SR-метаданных в файлах
@@ -226,7 +226,7 @@ CREATE TABLE oc_flashcards_user_settings (
 **Содержимое `settings` JSON:**
 ```json
 {
-  "deckFolder": "/ObsidianSync",
+  "deckFolder": "/StudySync",
   "cardLayout": "classic",
   "buttonPosition": "bottom",
   "showProgress": true,
