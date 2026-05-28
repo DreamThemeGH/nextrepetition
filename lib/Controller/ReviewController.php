@@ -79,7 +79,7 @@ class ReviewController extends OCSController {
         $card = $cards[$cardIndex];
 
         // LOG: Input data
-        $this->logger->error('[REVIEW] Input: cardIndex=' . $cardIndex . ', srIndex=' . $srIndex . ', rating=' . $rating, [
+        $this->logger->debug('[REVIEW] Input: cardIndex=' . $cardIndex . ', srIndex=' . $srIndex . ', rating=' . $rating, [
             'oldSR' => $card['sr'] ?? [],
             'front' => substr($card['front'] ?? '', 0, 50),
         ]);
@@ -88,7 +88,7 @@ class ReviewController extends OCSController {
         $newSR = $this->sm2Service->processReview($card, $rating, $srIndex);
 
         // LOG: SM-2 output
-        $this->logger->error('[REVIEW] SM-2 output: newSR', ['newSR' => $newSR]);
+        $this->logger->debug('[REVIEW] SM-2 output: newSR', ['newSR' => $newSR]);
 
         // Update buffer
         $success = $this->bufferService->updateCardSR($this->userId, $path, $cardIndex, $newSR);
@@ -101,9 +101,9 @@ class ReviewController extends OCSController {
 
         // Auto-save to file immediately to prevent data loss
         // (user may close browser tab at any time)
-        $this->logger->error('[REVIEW] Before save()', ['path' => $path]);
+        $this->logger->debug('[REVIEW] Before save()', ['path' => $path]);
         $saveResult = $this->bufferService->save($this->userId, $path);
-        $this->logger->error('[REVIEW] After save()', ['saveResult' => $saveResult]);
+        $this->logger->debug('[REVIEW] After save()', ['saveResult' => $saveResult]);
 
         // Count remaining due directions in the buffer
         // Each due direction counts as 1 (a card with 2 due directions = 2)
