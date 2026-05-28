@@ -2,10 +2,10 @@
 <info xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
       xsi:noNamespaceSchemaLocation="https://apps.nextcloud.com/schema/apps/info.xsd">
     <id>flashcards</id>
-    <name>Repetio — Spaced Repetition Flashcards</name>
+    <name>Repetio Flashcards</name>
     <summary>Study Markdown flashcards with SM-2 spaced repetition</summary>
     <description><![CDATA[
-# Repetio — Spaced Repetition Flashcards
+# Repetio Flashcards
 
 A file-based spaced repetition flashcard app for Nextcloud.
 
@@ -43,7 +43,7 @@ Files — no database lock-in and no vendor-specific card database.
     </dependencies>
     <navigations>
         <navigation>
-            <name>Repetio</name>
+            <name>Flashcards</name>
             <route>flashcards.page.index</route>
             <icon>app.svg</icon>
             <order>10</order>
