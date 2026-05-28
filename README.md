@@ -1,75 +1,66 @@
-# Nextcloud Flashcards v2
+# Repetio
 
-Spaced-repetition flashcard app for Nextcloud. Study markdown-based flashcard decks directly from your Nextcloud files.
+Repetio is a file-based spaced-repetition flashcard app for Nextcloud. It keeps card content in Markdown files inside your Nextcloud Files, so decks stay portable, versionable, and compatible with Obsidian Spaced Repetition.
 
-## Features
+## What it does
 
-- **File-based decks** — Uses `.md` files stored in your Nextcloud files. No external database for cards.
-- **SM-2 Algorithm** — Industry-standard spaced repetition with configurable intervals.
-- **Hierarchical deck browser** — Tree view of your deck folders, like Nextcloud Files.
-- **Folder tree selector** — Visual folder picker in Settings using WebDAV.
-- **Study sessions** — Flip cards, rate difficulty (Again / Hard / Good / Easy).
-- **Statistics** — Due forecast charts, interval distribution, per-deck breakdown.
-- **Dashboard** — Global stats at a glance with quick-start study button.
-- **Card formats** — Basic (Q/A) and Cloze deletions.
-- **TTS** — Text-to-speech via Edge TTS service.
-- **Auto-save** — Configurable auto-save interval.
-- **Accessibility** — ARIA tree roles, keyboard navigation, screen reader support.
-- **Dark theme** — Fully compatible with Nextcloud dark mode (currentColor icon).
+- Stores flashcards as `.md` files instead of using an external card database.
+- Uses SM-2-style scheduling and writes review metadata back to the source files.
+- Supports basic cards, cloze cards, transcription fields, and study statistics.
+- Includes a folder picker, dashboard, study session, deck browser, and TTS support.
+- Works with Nextcloud dark mode and keyboard navigation.
 
-## Architecture
+## Screens
 
-```
-Frontend: Vue 3 + Vite (IIFE) + Pinia + vue-router + @nextcloud/vue
-Backend:  PHP (OCSController) + file-based deck storage
-DB:       Single table (oc_flashcards_user_settings) for user preferences
-Build:    Vite → js/flashcards-main.js (~855KB) + css/nextcloud-flashcards.css (~74KB)
-```
+If you want to add screenshots later, place them in a `screenshots/` folder and link them here.
 
-### Key directories
+## Tech stack
 
-```
-src/
-├── components/       DeckTree, DeckTreeNode, FolderTreeSelector, FolderTreeNode
-├── views/            Dashboard, DeckBrowser, StudySession, CardBrowser, Statistics, Settings
-├── stores/           Pinia stores: deck, settings, stats, study
-├── services/         api.ts (OCS HTTP), webdav.ts (PROPFIND folder listing)
-├── types/            TypeScript interfaces: deck, card, sr
-├── composables/      useAutoSave, useKeyboard
-└── assets/styles/    SCSS variables, global styles
+- Frontend: Vue 3, Vite, Pinia, vue-router, @nextcloud/vue
+- Backend: PHP app controllers and file-based deck services
+- Build: Vite bundle output into `js/` and `css/`
 
-lib/
-├── Controller/       DeckController, SettingsController, StatsController
-├── Service/          DeckFileService, CardParser, SM2Service, BufferService, etc.
-├── Db/               UserSettings entity + mapper
-└── Listener/         CspListener
-```
-
-## Development
+## Local development
 
 ```bash
-# Install dependencies
-npm install
-
-# Dev build with watch
-npm run dev
-
-# Production build
+npm ci
 npm run build
-
-# Run tests
-npm test
+npm run test
+npm run typecheck
 ```
 
-## Deployment
+## Deploy to a local Nextcloud AIO instance
 
 ```bash
-# Build
-npm run build
+make deploy
+```
 
-# Copy to NC container
-docker cp js/flashcards-main.js nextcloud-aio-nextcloud:/var/www/html/custom_apps/flashcards/js/
-docker cp css/nextcloud-flashcards.css nextcloud-aio-nextcloud:/var/www/html/custom_apps/flashcards/css/
+If you need to refresh the app inside the container manually, the app id is `flashcards`.
+
+## App Store packaging
+
+The repository already includes the files needed for Nextcloud App Store preparation:
+
+- `appinfo/info.xml` for metadata and compatibility
+- `CHANGELOG.md` for release notes
+- `.github/workflows/release.yml` for build and release automation
+- `scripts/get-cert.sh` and `scripts/verify-cert.sh` for signing setup
+
+To build a release archive locally:
+
+```bash
+make appstore
+```
+
+## Repository layout
+
+```text
+src/            Vue frontend
+lib/            PHP backend
+templates/      Nextcloud page templates
+appinfo/        App metadata and routes
+scripts/        Signing helpers
+.github/        GitHub Actions workflow
 ```
 
 ## License

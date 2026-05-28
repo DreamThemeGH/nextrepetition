@@ -2,44 +2,48 @@
 <info xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
       xsi:noNamespaceSchemaLocation="https://apps.nextcloud.com/schema/apps/info.xsd">
     <id>flashcards</id>
-    <name>Flashcards</name>
-    <summary>Spaced repetition flashcards for language learning — powered by Markdown files</summary>
+    <name>Repetio — Spaced Repetition Flashcards</name>
+    <summary>Study Markdown flashcards with SM-2 spaced repetition — Obsidian SR compatible</summary>
     <description><![CDATA[
-# Nextcloud Flashcards v2
+# Repetio — Spaced Repetition Flashcards
 
 A file-based spaced repetition flashcard app for Nextcloud.
 
 ## Key Principle
-**Your .md files are the single source of truth.** Cards, translations, and SR metadata all live in standard Obsidian Spaced Repetition format Markdown files stored in your Nextcloud Files.
+**Your `.md` files are the single source of truth.** Cards, scheduling metadata, and
+translations all live in standard Obsidian Spaced Repetition format Markdown files stored
+in your Nextcloud Files — no database lock-in, works offline with Obsidian.
 
 ## Features
-- **File-based storage** — cards stored in .md files, compatible with Obsidian SR
-- **SM-2 algorithm** — intelligent review scheduling written back to .md files
-- **Card formats** — Basic (word:::translation), Cloze (==word==^[hint]), transcriptions
-- **Auto-save** — changes buffered in memory, saved to .md every 10 seconds
-- **Text-to-Speech** — Edge TTS + Web Speech API fallback
-- **Study statistics** — computed from SR metadata in your files
+- **File-based storage** — cards stored in `.md` files, fully compatible with Obsidian SR
+- **SM-2 algorithm** — intelligent review scheduling written back into `.md` files
+- **Card formats** — Basic (`word:::translation`), Cloze (`==word==^[hint]`), transcriptions
+- **Auto-save** — changes buffered in memory, flushed to `.md` every 10 seconds
+- **Text-to-Speech** — Edge TTS backend + Web Speech API browser fallback
+- **Study statistics** — due forecast, interval distribution, per-deck breakdown
 - **Git conflict resolution** — auto-resolves merge conflicts in SR tags
-- **Dark/light theme** — follows Nextcloud theme
-- **Keyboard shortcuts** — Space to reveal, 1-5 to rate
+- **Dark / light theme** — follows Nextcloud theme automatically
+- **Keyboard shortcuts** — Space to reveal, 1–5 to rate
 - **Multilingual** — English, Russian, Serbian
     ]]></description>
     <version>2.0.5</version>
-    <licence>agpl</licence>
-    <author mail="flashcards@nextcloud.local" homepage="https://github.com/nextcloud-flashcards">Nextcloud Flashcards</author>
+    <licence>AGPL-3.0-or-later</licence>
+    <author mail="artem@dreamtheme.ru" homepage="https://github.com/DreamThemeGH">Artem (DreamThemeGH)</author>
     <namespace>Flashcards</namespace>
     <category>organization</category>
-    <bugs>https://github.com/nextcloud-flashcards/flashcards/issues</bugs>
-    <repository type="git">https://github.com/nextcloud-flashcards/flashcards.git</repository>
-    <screenshot>https://raw.githubusercontent.com/nextcloud-flashcards/flashcards/main/screenshots/study.png</screenshot>
-    <screenshot>https://raw.githubusercontent.com/nextcloud-flashcards/flashcards/main/screenshots/browser.png</screenshot>
+    <website>https://github.com/DreamThemeGH/nextrepetition</website>
+    <bugs>https://github.com/DreamThemeGH/nextrepetition/issues</bugs>
+    <repository type="git">https://github.com/DreamThemeGH/nextrepetition.git</repository>
+    <screenshot>https://raw.githubusercontent.com/DreamThemeGH/nextrepetition/main/screenshots/study.png</screenshot>
+    <screenshot>https://raw.githubusercontent.com/DreamThemeGH/nextrepetition/main/screenshots/browser.png</screenshot>
+    <donation type="other">https://github.com/sponsors/DreamThemeGH</donation>
     <dependencies>
-        <nextcloud min-version="28" max-version="32"/>
+        <nextcloud min-version="28" max-version="33"/>
         <php min-version="8.1"/>
     </dependencies>
     <navigations>
         <navigation>
-            <name>Flashcards</name>
+            <name>Repetio</name>
             <route>flashcards.page.index</route>
             <icon>app.svg</icon>
             <order>10</order>

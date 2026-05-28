@@ -1,0 +1,93 @@
+name: Build and publish to Nextcloud App Store
+
+# Triggers on every published release (including pre-releases).
+# Pre-releases are uploaded to App Store as "nightly" versions.
+on:
+  release:
+    types: [published]
+
+env:
+  APP_NAME: flashcards
+  NODE_VERSION: '20'
+
+jobs:
+  build_and_publish:
+    runs-on: ubuntu-latest
+    name: Build, sign and upload
+
+    steps:
+      # ── 1. Source ────────────────────────────────────────────────────────────
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # ── 2. Node + npm cache ──────────────────────────────────────────────────
+      - name: Setup Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      # ── 3. Build frontend ────────────────────────────────────────────────────
+      - name: Install npm dependencies
+        run: npm ci
+
+      - name: Build production assets
+        run: npm run build
+
+      # ── 4. Create release archive ────────────────────────────────────────────
+      - name: Create App Store archive
+        run: |
+          mkdir -p build/artifacts/appstore
+
+          rsync -a \
+            --exclude='.git' \
+            --exclude='node_modules' \
+            --exclude='src' \
+            --exclude='tests' \
+            --exclude='scripts' \
+            --exclude='build' \
+            --exclude='backup_sr*' \
+            --exclude='*.ts' \
+            --exclude='tsconfig.json' \
+            --exclude='vite.config.ts' \
+            --exclude='vitest.config.ts' \
+            --exclude='phpunit.xml' \
+            --exclude='package.json' \
+            --exclude='package-lock.json' \
+            --exclude='composer.json' \
+            --exclude='Makefile' \
+            --exclude='.gitignore' \
+            --exclude='.github' \
+            --exclude='ARCHITECTURE.md' \
+            --exclude='BUGFIXES*' \
+            --exclude='TODO.md' \
+            --exclude='deploy.sh' \
+            ./ build/artifacts/appstore/${{ env.APP_NAME }}/
+
+          cd build/artifacts/appstore
+          tar -czf ${{ env.APP_NAME }}.tar.gz ${{ env.APP_NAME }}/
+          echo "Archive size: $(du -sh ${{ env.APP_NAME }}.tar.gz)"
+
+      # ── 5. Attach archive to GitHub Release ──────────────────────────────────
+      - name: Attach archive to GitHub Release
+        uses: svenstaro/upload-release-action@v2
+        id: attach_to_release
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: build/artifacts/appstore/${{ env.APP_NAME }}.tar.gz
+          asset_name: ${{ env.APP_NAME }}.tar.gz
+          tag: ${{ github.ref }}
+          overwrite: true
+
+      # ── 6. Push to Nextcloud App Store ───────────────────────────────────────
+      # Secrets required (repo Settings → Secrets → Actions):
+      #   APP_PRIVATE_KEY  — content of flashcards.key
+      #   APPSTORE_TOKEN   — from https://apps.nextcloud.com/account/token
+      - name: Upload to Nextcloud App Store
+        uses: R0Wi/nextcloud-appstore-push-action@v1
+        with:
+          app_name: ${{ env.APP_NAME }}
+          appstore_token: ${{ secrets.APPSTORE_TOKEN }}
+          download_url: ${{ steps.attach_to_release.outputs.browser_download_url }}
+          app_private_key: ${{ secrets.APP_PRIVATE_KEY }}
+          nightly: ${{ github.event.release.prerelease }}

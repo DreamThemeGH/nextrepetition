@@ -29,14 +29,14 @@
                 <label>{{ t('flashcards', 'Sentence with ==cloze==') }}</label>
                 <NcTextField
                     :model-value="sentence ?? ''"
-                    :placeholder="t('flashcards', 'I ==like==^[люблю] pizza')"
+                    :placeholder="t('flashcards', 'I ==like==^[like] pizza')"
                     @update:model-value="$emit('update:sentence', String($event))" />
             </div>
             <div class="form-group">
                 <label>{{ t('flashcards', 'Translation') }}</label>
                 <NcTextField
                     :model-value="translation ?? ''"
-                    :placeholder="t('flashcards', 'Я люблю пиццу')"
+                    :placeholder="t('flashcards', 'I love pizza')"
                     @update:model-value="$emit('update:translation', String($event))" />
             </div>
         </template>

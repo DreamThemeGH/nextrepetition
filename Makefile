@@ -1,7 +1,10 @@
-.PHONY: build dev watch lint test clean package deploy
+.PHONY: build dev watch lint test clean package deploy appstore
 
 NPM := npm
 COMPOSER := composer
+APP_NAME   := flashcards
+CERT_DIR   := $(HOME)/.nextcloud/certificates
+BUILD_DIR  := build/artifacts/appstore
 
 # Build production JS/CSS
 build:
@@ -61,3 +64,45 @@ deploy: build
 	docker cp img/. nextcloud-aio-nextcloud:/var/www/html/custom_apps/flashcards/img/
 	docker cp l10n/. nextcloud-aio-nextcloud:/var/www/html/custom_apps/flashcards/l10n/
 	@echo "Deploy complete!"
+
+# Build signed release archive for Nextcloud App Store
+# Requires: ~/.nextcloud/certificates/flashcards.key + flashcards.crt
+# Run scripts/get-cert.sh first if you don't have them.
+appstore: build
+	@echo "=== Building App Store release for $(APP_NAME) ==="
+	rm -rf $(BUILD_DIR)
+	mkdir -p $(BUILD_DIR)
+	rsync -a \
+		--exclude='.git' \
+		--exclude='node_modules' \
+		--exclude='src' \
+		--exclude='tests' \
+		--exclude='scripts' \
+		--exclude='build' \
+		--exclude='backup_sr*' \
+		--exclude='*.ts' \
+		--exclude='tsconfig.json' \
+		--exclude='vite.config.ts' \
+		--exclude='vitest.config.ts' \
+		--exclude='phpunit.xml' \
+		--exclude='package.json' \
+		--exclude='package-lock.json' \
+		--exclude='composer.json' \
+		--exclude='Makefile' \
+		--exclude='.gitignore' \
+		--exclude='.github' \
+		--exclude='ARCHITECTURE.md' \
+		--exclude='BUGFIXES*' \
+		--exclude='TODO.md' \
+		--exclude='deploy.sh' \
+		./ $(BUILD_DIR)/$(APP_NAME)/
+	cd $(BUILD_DIR) && tar -czf $(APP_NAME).tar.gz $(APP_NAME)/
+	@echo "=== Archive ready: $(BUILD_DIR)/$(APP_NAME).tar.gz ==="
+	@if [ -f $(CERT_DIR)/$(APP_NAME).key ]; then \
+		echo "=== Signature for App Store registration/upload ==="; \
+		openssl dgst -sha512 -sign $(CERT_DIR)/$(APP_NAME).key \
+			$(BUILD_DIR)/$(APP_NAME).tar.gz | openssl base64; \
+	else \
+		echo "⚠ No private key found at $(CERT_DIR)/$(APP_NAME).key"; \
+		echo "  Run scripts/get-cert.sh before App Store publication."; \
+	fi
