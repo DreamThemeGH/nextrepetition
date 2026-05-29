@@ -103,7 +103,7 @@ class StatsController extends OCSController {
      * @param int $topN Number of top decks (by activity). 9999 = all.
      */
     #[NoAdminRequired]
-    public function aggregated(?string $topN = null): DataResponse {
+    public function aggregated(int $topn = 3): DataResponse {
         if ($this->userId === null) {
             return new DataResponse(['error' => 'Not authenticated'], Http::STATUS_UNAUTHORIZED);
         }
@@ -111,9 +111,7 @@ class StatsController extends OCSController {
         $settings   = $this->settingsMapper->getOrCreate($this->userId);
         $deckFolder = $settings->getSetting('deckFolder');
 
-        // Query parameters arrive as strings in OCS requests.
-        // Parse defensively to avoid "Invalid query" on strict scalar coercion.
-        $parsedTopN = (int) ($topN ?? '3');
+        $parsedTopN = (int) $topn;
         if ($parsedTopN <= 0) {
             $parsedTopN = 3;
         }

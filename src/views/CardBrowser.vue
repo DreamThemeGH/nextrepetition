@@ -2,7 +2,9 @@
     <div class="flashcards-page">
         <div class="flashcards-page-header">
             <div class="header-left">
-                <NcButton @click="goBack">
+                <NcButton
+                    :aria-label="t('flashcards', 'Back')"
+                    @click="goBack">
                     <template #icon><IconBack :size="20" /></template>
                 </NcButton>
                 <h2>{{ deckName }}</h2>
