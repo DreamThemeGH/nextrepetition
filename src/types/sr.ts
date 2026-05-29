@@ -70,13 +70,36 @@ export interface OverviewStats {
     totalDue: number
     totalNew: number
     totalReviewed: number
+    reviewedToday: number
+    reviewedLast2Weeks: number
     decks: Array<{
         name: string
         path: string
         total: number
         due: number
         new: number
+        reviewedToday: number
     }>
+}
+
+export interface DeckStatsSummary {
+    totalCards: number
+    totalDue: number
+    totalNew: number
+    totalReviewed: number
+}
+
+export interface AggregatedStats {
+    topN: number
+    totalDecks: number
+    topDecks: Array<{ name: string; path: string; total: number; due: number; new: number }>
+    allDecks: Array<{ name: string; path: string; total: number; due: number; new: number }>
+    topSummary: DeckStatsSummary
+    allSummary: DeckStatsSummary
+    topDueForecast: Record<number, number>
+    allDueForecast: Record<number, number>
+    topIntervalDistribution: Record<string, number>
+    allIntervalDistribution: Record<string, number>
 }
 
 export interface DeckStats {

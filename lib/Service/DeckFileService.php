@@ -195,21 +195,25 @@ class DeckFileService {
                     try {
                         $content = $node->getContent();
                         $counts = $this->parser->quickScan($content);
+                        $reviewStats = $this->parser->getReviewStats($content);
                     } catch (\Exception $e) {
                         $counts = ['total' => 0, 'due' => 0, 'new' => 0];
+                        $reviewStats = ['reviewedToday' => 0, 'reviewedLast2Weeks' => 0];
                     }
 
                     // Only include files that actually contain flashcards
                     if ($counts['total'] > 0) {
                         $decks[] = [
-                            'path' => $relativePath,
-                            'name' => pathinfo($node->getName(), PATHINFO_FILENAME),
-                            'folder' => dirname($relativePath),
-                            'size' => $node->getSize(),
-                            'modified' => $node->getMTime(),
-                            'totalCards' => $counts['total'],
-                            'dueCards' => $counts['due'],
-                            'newCards' => $counts['new'],
+                            'path'               => $relativePath,
+                            'name'               => pathinfo($node->getName(), PATHINFO_FILENAME),
+                            'folder'             => dirname($relativePath),
+                            'size'               => $node->getSize(),
+                            'modified'           => $node->getMTime(),
+                            'totalCards'         => $counts['total'],
+                            'dueCards'           => $counts['due'],
+                            'newCards'           => $counts['new'],
+                            'reviewedToday'      => $reviewStats['reviewedToday'],
+                            'reviewedLast2Weeks' => $reviewStats['reviewedLast2Weeks'],
                         ];
                     }
                 }

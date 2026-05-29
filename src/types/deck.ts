@@ -13,6 +13,8 @@ export interface DeckMeta {
     totalCards: number
     dueCards: number
     newCards: number
+    reviewedToday?: number
+    reviewedLast2Weeks?: number
 }
 
 export interface DeckOpenResult {

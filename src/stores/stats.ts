@@ -8,14 +8,16 @@ import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { showError } from '@nextcloud/dialogs'
 import { translate as t } from '@nextcloud/l10n'
-import type { OverviewStats, DeckStats, DueCount } from '@/types/sr'
+import type { OverviewStats, DeckStats, DueCount, AggregatedStats } from '@/types/sr'
 import * as api from '@/services/api'
 
 export const useStatsStore = defineStore('stats', () => {
     const overview = ref<OverviewStats | null>(null)
     const deckStats = ref<DeckStats | null>(null)
     const dueCounts = ref<DueCount[]>([])
+    const aggregated = ref<AggregatedStats | null>(null)
     const loading = ref(false)
+    const aggregating = ref(false)
 
     async function loadOverview() {
         loading.value = true
@@ -47,13 +49,27 @@ export const useStatsStore = defineStore('stats', () => {
         }
     }
 
+    async function loadAggregated(topN: number) {
+        aggregating.value = true
+        try {
+            aggregated.value = await api.fetchAggregatedStats(topN)
+        } catch {
+            showError(t('flashcards', 'Failed to load aggregated statistics'))
+        } finally {
+            aggregating.value = false
+        }
+    }
+
     return {
         overview,
         deckStats,
         dueCounts,
+        aggregated,
         loading,
+        aggregating,
         loadOverview,
         loadDeckStats,
         loadDueCounts,
+        loadAggregated,
     }
 })

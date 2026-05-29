@@ -19,6 +19,7 @@ import type {
     OverviewStats,
     DeckStats,
     DueCount,
+    AggregatedStats,
 } from '@/types/sr'
 
 const OCS = '/ocs/v2.php/apps/flashcards/api/v1'
@@ -164,6 +165,14 @@ export async function fetchDeckStats(path: string): Promise<DeckStats> {
 export async function fetchDueCounts(): Promise<DueCount[]> {
     const resp = await axios.get(url('/stats/due-counts'), { headers: HEADERS })
     return extract<DueCount[]>(resp)
+}
+
+export async function fetchAggregatedStats(topN: number): Promise<AggregatedStats> {
+    const resp = await axios.get(url('/stats/aggregated'), {
+        headers: HEADERS,
+        params: { topN },
+    })
+    return extract<AggregatedStats>(resp)
 }
 
 // ─── Settings ─────────────────────────────────────────────

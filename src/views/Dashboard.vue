@@ -58,7 +58,17 @@
                         <IconCheck :size="32" />
                     </div>
                     <div class="summary-number">{{ stats?.totalReviewed ?? 0 }}</div>
-                    <div class="summary-label">{{ t('flashcards', 'Reviewed') }}</div>
+                    <div class="summary-label">Reviewed (all time)</div>
+                    <div class="summary-reviewed-breakdown">
+                        <div class="breakdown-item">
+                            <span class="breakdown-value">{{ stats?.reviewedToday ?? 0 }}</span>
+                            <span class="breakdown-label">Today</span>
+                        </div>
+                        <div class="breakdown-item">
+                            <span class="breakdown-value">{{ stats?.reviewedLast2Weeks ?? 0 }}</span>
+                            <span class="breakdown-label">Last 14 days</span>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -98,6 +108,7 @@
                                 <div class="deck-shortlist-stats">
                                     {{ deck.dueCards }} {{ t('flashcards', 'due') }} ·
                                     {{ deck.newCards }} {{ t('flashcards', 'new') }} ·
+                                    {{ deck.reviewedToday ?? 0 }} reviewed today ·
                                     {{ deck.totalCards }} {{ t('flashcards', 'cards') }}
                                 </div>
                             </div>
@@ -280,6 +291,32 @@ onMounted(async () => {
 .summary-total .summary-number { color: #e9ecef; }
 .summary-decks .summary-number { color: #ffd43b; }
 .summary-reviewed .summary-number { color: #69db7c; }
+
+.summary-reviewed-breakdown {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    margin-top: 8px;
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
+    padding-top: 8px;
+    width: 100%;
+}
+.breakdown-item {
+    text-align: center;
+}
+.breakdown-value {
+    display: block;
+    font-size: 1.1em;
+    font-weight: 600;
+    color: #69db7c;
+}
+.breakdown-label {
+    display: block;
+    font-size: 0.72em;
+    color: var(--color-text-maxcontrast);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
 
 .quick-actions {
     display: flex;

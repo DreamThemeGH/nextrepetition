@@ -516,4 +516,57 @@ class CardParserService {
             'new' => $new,
         ];
     }
+
+    /**
+     * Compute review-activity counts from SR metadata in a deck file.
+     *
+     * "Last reviewed" date = due_date − interval days.
+     * Each SR direction is counted separately (mirrors how totalCards is counted).
+     * The dummy date '2000-01-01' marks unreviewed directions and is skipped.
+     *
+     * @param string $content Raw .md file content
+     * @return array{reviewedToday: int, reviewedLast2Weeks: int}
+     */
+    public function getReviewStats(string $content): array {
+        $reviewedToday      = 0;
+        $reviewedLast2Weeks = 0;
+
+        $todayStr      = date('Y-m-d');
+        $twoWeeksAgo   = date('Y-m-d', strtotime('-14 days'));
+
+        foreach (explode("\n", $content) as $line) {
+            if (!str_contains($line, '<!--SR:')) {
+                continue;
+            }
+            if (!preg_match(self::SR_REGEX, trim($line), $srMatch)) {
+                continue;
+            }
+
+            preg_match_all(self::SR_ENTRY_REGEX, $srMatch[1], $entries, PREG_SET_ORDER);
+
+            foreach ($entries as $entry) {
+                $date     = $entry[1];
+                $interval = (int) $entry[2];
+
+                if ($date === '2000-01-01') {
+                    continue; // unreviewed direction
+                }
+
+                // last_reviewed = due_date − interval days
+                $lastReviewed = date('Y-m-d', strtotime($date . " -{$interval} days"));
+
+                if ($lastReviewed === $todayStr) {
+                    $reviewedToday++;
+                    $reviewedLast2Weeks++;
+                } elseif ($lastReviewed >= $twoWeeksAgo && $lastReviewed < $todayStr) {
+                    $reviewedLast2Weeks++;
+                }
+            }
+        }
+
+        return [
+            'reviewedToday'      => $reviewedToday,
+            'reviewedLast2Weeks' => $reviewedLast2Weeks,
+        ];
+    }
 }

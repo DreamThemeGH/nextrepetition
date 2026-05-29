@@ -30,34 +30,41 @@ class StatsService {
     public function getOverview(string $userId, string $deckFolder): array {
         $decks = $this->fileService->listDecks($userId, $deckFolder);
 
-        $totalCards = 0;
-        $totalDue = 0;
-        $totalNew = 0;
-        $totalReviewed = 0;
-        $deckStats = [];
+        $totalCards             = 0;
+        $totalDue               = 0;
+        $totalNew               = 0;
+        $totalReviewed          = 0;
+        $totalReviewedToday     = 0;
+        $totalReviewedLast2Weeks = 0;
+        $deckStats              = [];
 
         foreach ($decks as $deck) {
-            $totalCards += $deck['totalCards'];
-            $totalDue += $deck['dueCards'];
-            $totalNew += $deck['newCards'];
-            $totalReviewed += ($deck['totalCards'] - $deck['newCards']);
+            $totalCards              += $deck['totalCards'];
+            $totalDue                += $deck['dueCards'];
+            $totalNew                += $deck['newCards'];
+            $totalReviewed           += ($deck['totalCards'] - $deck['newCards']);
+            $totalReviewedToday      += ($deck['reviewedToday'] ?? 0);
+            $totalReviewedLast2Weeks += ($deck['reviewedLast2Weeks'] ?? 0);
 
             $deckStats[] = [
-                'name' => $deck['name'],
-                'path' => $deck['path'],
-                'total' => $deck['totalCards'],
-                'due' => $deck['dueCards'],
-                'new' => $deck['newCards'],
+                'name'          => $deck['name'],
+                'path'          => $deck['path'],
+                'total'         => $deck['totalCards'],
+                'due'           => $deck['dueCards'],
+                'new'           => $deck['newCards'],
+                'reviewedToday' => $deck['reviewedToday'] ?? 0,
             ];
         }
 
         return [
-            'totalDecks' => count($decks),
-            'totalCards' => $totalCards,
-            'totalDue' => $totalDue,
-            'totalNew' => $totalNew,
-            'totalReviewed' => $totalReviewed,
-            'decks' => $deckStats,
+            'totalDecks'            => count($decks),
+            'totalCards'            => $totalCards,
+            'totalDue'              => $totalDue,
+            'totalNew'              => $totalNew,
+            'totalReviewed'         => $totalReviewed,
+            'reviewedToday'         => $totalReviewedToday,
+            'reviewedLast2Weeks'    => $totalReviewedLast2Weeks,
+            'decks'                 => $deckStats,
         ];
     }
 
@@ -125,6 +132,103 @@ class StatsService {
             'maxInterval' => count($intervals) > 0 ? max($intervals) : 0,
             'dueForecast' => $dueForecast,
             'intervalDistribution' => $this->buildIntervalDistribution($intervals),
+        ];
+    }
+
+    /**
+     * Get aggregated statistics for top-N (or all) decks.
+     *
+     * Decks are ranked by activity (dueCards + newCards desc), then by totalCards.
+     * Returns combined due forecast and interval distribution for the top slice
+     * AND for all decks — so the frontend can render dual comparison charts.
+     *
+     * @param int $topN How many decks to include in the "top" slice (use 9999 for all)
+     */
+    public function getAggregatedStats(string $userId, string $deckFolder, int $topN): array {
+        $decks = $this->fileService->listDecks($userId, $deckFolder);
+
+        // Sort by activity (due + new) descending, then by total cards
+        usort($decks, static function (array $a, array $b): int {
+            $actA = $a['dueCards'] + $a['newCards'];
+            $actB = $b['dueCards'] + $b['newCards'];
+            return $actA !== $actB ? $actB - $actA : $b['totalCards'] - $a['totalCards'];
+        });
+
+        $topDecks  = array_slice($decks, 0, $topN);
+        $topPaths  = array_column($topDecks, 'path');
+
+        // Zero-fill 0–30 day forecast buckets
+        $emptyForecast = [];
+        for ($d = 0; $d <= 30; $d++) {
+            $emptyForecast[$d] = 0;
+        }
+        $emptyDist = [
+            '0-1d' => 0, '2-7d' => 0, '1-2w' => 0, '2w-1m' => 0,
+            '1-3m' => 0, '3-6m' => 0, '6m-1y' => 0, '1y+' => 0,
+        ];
+
+        $topForecast = $emptyForecast;
+        $allForecast = $emptyForecast;
+        $topDist     = $emptyDist;
+        $allDist     = $emptyDist;
+
+        $topSummary = ['totalCards' => 0, 'totalDue' => 0, 'totalNew' => 0, 'totalReviewed' => 0];
+        $allSummary = ['totalCards' => 0, 'totalDue' => 0, 'totalNew' => 0, 'totalReviewed' => 0];
+
+        foreach ($decks as $deck) {
+            $allSummary['totalCards']    += $deck['totalCards'];
+            $allSummary['totalDue']      += $deck['dueCards'];
+            $allSummary['totalNew']      += $deck['newCards'];
+            $allSummary['totalReviewed'] += $deck['totalCards'] - $deck['newCards'];
+
+            $isTop = in_array($deck['path'], $topPaths, true);
+            if ($isTop) {
+                $topSummary['totalCards']    += $deck['totalCards'];
+                $topSummary['totalDue']      += $deck['dueCards'];
+                $topSummary['totalNew']      += $deck['newCards'];
+                $topSummary['totalReviewed'] += $deck['totalCards'] - $deck['newCards'];
+            }
+
+            try {
+                $deckStats = $this->getDeckStats($userId, $deck['path']);
+            } catch (\Exception) {
+                continue;
+            }
+
+            foreach ($deckStats['dueForecast'] as $day => $count) {
+                $allForecast[$day] = ($allForecast[$day] ?? 0) + $count;
+                if ($isTop) {
+                    $topForecast[$day] = ($topForecast[$day] ?? 0) + $count;
+                }
+            }
+
+            foreach ($deckStats['intervalDistribution'] as $bucket => $count) {
+                $allDist[$bucket] = ($allDist[$bucket] ?? 0) + $count;
+                if ($isTop) {
+                    $topDist[$bucket] = ($topDist[$bucket] ?? 0) + $count;
+                }
+            }
+        }
+
+        $makeMeta = static fn(array $d): array => [
+            'name'  => $d['name'],
+            'path'  => $d['path'],
+            'total' => $d['totalCards'],
+            'due'   => $d['dueCards'],
+            'new'   => $d['newCards'],
+        ];
+
+        return [
+            'topN'                    => min($topN, count($decks)),
+            'totalDecks'              => count($decks),
+            'topDecks'                => array_map($makeMeta, $topDecks),
+            'allDecks'                => array_map($makeMeta, $decks),
+            'topSummary'              => $topSummary,
+            'allSummary'              => $allSummary,
+            'topDueForecast'          => $topForecast,
+            'allDueForecast'          => $allForecast,
+            'topIntervalDistribution' => $topDist,
+            'allIntervalDistribution' => $allDist,
         ];
     }
 
