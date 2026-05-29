@@ -40,10 +40,11 @@ axios.interceptors.response.use(
         const status = error?.response?.status
         const ocsMessage = error?.response?.data?.ocs?.meta?.message
         const message = ocsMessage || error?.message || 'Unknown error'
+        const requestUrl = error?.config?.url
 
         // Don't double-show for 401 (NC handles redirect)
         if (status !== 401) {
-            console.error(`[flashcards] API error ${status ?? ''}:`, message)
+            console.error(`[flashcards] API error ${status ?? ''} ${requestUrl ?? ''}:`, message)
         }
 
         return Promise.reject(
@@ -168,9 +169,13 @@ export async function fetchDueCounts(): Promise<DueCount[]> {
 }
 
 export async function fetchAggregatedStats(topN: number): Promise<AggregatedStats> {
+    const normalizedTopN = Number.isFinite(topN) && topN > 0
+        ? Math.min(9999, Math.floor(topN))
+        : 3
+
     const resp = await axios.get(url('/stats/aggregated'), {
         headers: HEADERS,
-        params: { topN },
+        params: { topN: normalizedTopN },
     })
     return extract<AggregatedStats>(resp)
 }
