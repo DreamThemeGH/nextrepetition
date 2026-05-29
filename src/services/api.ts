@@ -173,8 +173,9 @@ export async function fetchAggregatedStats(topN: number): Promise<AggregatedStat
         ? Math.min(9999, Math.floor(topN))
         : 3
 
-    const resp = await axios.get(url(`/stats/aggregated/${normalizedTopN}`), {
+    const resp = await axios.get(url('/stats/aggregated'), {
         headers: HEADERS,
+        params: { topn: normalizedTopN },
     })
     return extract<AggregatedStats>(resp)
 }

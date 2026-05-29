@@ -36,7 +36,7 @@ return [
         ['name' => 'stats#overview',    'url' => '/api/v1/stats/overview',    'verb' => 'GET'],
         ['name' => 'stats#deck',        'url' => '/api/v1/stats/deck',        'verb' => 'GET'],
         ['name' => 'stats#dueCounts',   'url' => '/api/v1/stats/due-counts',  'verb' => 'GET'],
-        ['name' => 'stats#aggregated',  'url' => '/api/v1/stats/aggregated/{topn}', 'verb' => 'GET'],
+        ['name' => 'stats#aggregated',  'url' => '/api/v1/stats/aggregated',  'verb' => 'GET'],
 
         // === Settings (only DB table) ===
         ['name' => 'settings#get',    'url' => '/api/v1/settings',          'verb' => 'GET'],
