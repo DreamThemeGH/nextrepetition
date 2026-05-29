@@ -100,10 +100,10 @@ class StatsController extends OCSController {
      * Get aggregated stats for top-N (or all) decks.
      * Used by the Statistics page for combined forecast + distribution charts.
      *
-     * @param int $topN Number of top decks (by activity). 9999 = all.
+        * @param string|null $topn Number of top decks (by activity). 9999 = all.
      */
     #[NoAdminRequired]
-    public function aggregated(int $topn = 3): DataResponse {
+        public function aggregated(?string $topn = null): DataResponse {
         if ($this->userId === null) {
             return new DataResponse(['error' => 'Not authenticated'], Http::STATUS_UNAUTHORIZED);
         }
@@ -111,7 +111,7 @@ class StatsController extends OCSController {
         $settings   = $this->settingsMapper->getOrCreate($this->userId);
         $deckFolder = $settings->getSetting('deckFolder');
 
-        $parsedTopN = (int) $topn;
+        $parsedTopN = (int) ($topn ?? '3');
         if ($parsedTopN <= 0) {
             $parsedTopN = 3;
         }

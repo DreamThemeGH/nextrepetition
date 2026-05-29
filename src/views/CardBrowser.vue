@@ -3,7 +3,7 @@
         <div class="flashcards-page-header">
             <div class="header-left">
                 <NcButton
-                    :aria-label="t('flashcards', 'Back')"
+                    :ariaLabel="t('flashcards', 'Back')"
                     @click="goBack">
                     <template #icon><IconBack :size="20" /></template>
                 </NcButton>

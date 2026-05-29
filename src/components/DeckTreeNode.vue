@@ -44,7 +44,7 @@
                     <NcButton
                         variant="tertiary"
                         class="favorite-button"
-                        :aria-label="isFavorite ? t('flashcards', 'Remove from favorites') : t('flashcards', 'Add to favorites')"
+                        :ariaLabel="isFavorite ? t('flashcards', 'Remove from favorites') : t('flashcards', 'Add to favorites')"
                         @click.stop="toggleFavorite">
                         <template #icon>
                             <IconStar v-if="isFavorite" :size="18" />

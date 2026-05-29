@@ -49,7 +49,7 @@
             <!-- Back button + deck name header -->
             <div class="study-header">
                 <NcButton variant="tertiary"
-                    :aria-label="t('flashcards', 'Back to decks')"
+                    :ariaLabel="t('flashcards', 'Back to decks')"
                     @click="goBack"
                     class="back-button">
                     <template #icon>
@@ -79,7 +79,7 @@
                 <NcButton
                     class="edit-card-button"
                     variant="tertiary"
-                    :aria-label="t('flashcards', 'Edit card')"
+                    :ariaLabel="t('flashcards', 'Edit card')"
                     @click.stop="openEditCardDialog">
                     <template #icon>
                         <IconPencil :size="18" />
@@ -200,7 +200,7 @@
             <div class="study-controls">
                 <!-- Reverse direction button (basic cards only) -->
                 <NcButton v-if="isBasic(studyStore.currentCard)"
-                    :aria-label="t('flashcards', 'Reverse direction')"
+                    :ariaLabel="t('flashcards', 'Reverse direction')"
                     :aria-pressed="String(studyStore.isReversed)"
                     @click="studyStore.toggleDirection()">
                     <template #icon>
@@ -211,7 +211,7 @@
                 <NcButton v-if="tts.supported.value"
                     @click="speakCard"
                     :disabled="tts.speaking.value"
-                    :aria-label="t('flashcards', 'Read aloud')">
+                    :ariaLabel="t('flashcards', 'Read aloud')">
                     <template #icon>
                         <IconVolume :size="20" />
                     </template>
