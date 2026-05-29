@@ -120,16 +120,17 @@ class StatsController extends OCSController {
         }
         $parsedTopN = max(1, min(9999, $parsedTopN));
 
-        $this->logger->debug('[STATS] aggregated request received', [
+        $this->logger->error('[STATS] aggregated request received', [
             'userId' => $this->userId,
             'rawTopN' => $rawTopN,
             'parsedTopN' => $parsedTopN,
             'deckFolder' => $deckFolder,
+            'requestUrl' => method_exists($this->request, 'getRequestUri') ? $this->request->getRequestUri() : null,
         ]);
 
         try {
             $stats = $this->statsService->getAggregatedStats($this->userId, $deckFolder, $parsedTopN);
-            $this->logger->debug('[STATS] aggregated response ready', [
+            $this->logger->error('[STATS] aggregated response ready', [
                 'userId' => $this->userId,
                 'topN' => $parsedTopN,
                 'topDeckCount' => count($stats['topDecks'] ?? []),
